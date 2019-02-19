@@ -1,5 +1,7 @@
 python resnet_main.py ^
 --use_tpu=False ^
---data_dir=$DATA_DIR ^
---model_dir=$MODEL_DIR
+--data_dir="G:\\TPU\data" ^
+--model_dir="G:\\TPU\model" ^
+--tpu="" ^
+--precision="float32"
 pause
