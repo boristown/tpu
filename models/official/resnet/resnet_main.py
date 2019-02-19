@@ -478,6 +478,7 @@ def resnet_model_fn(features, labels, mode, params):
       # expects [batch_size, ...] Tensors, thus reshape to introduce a batch
       # dimension. These Tensors are implicitly concatenated to
       # [params['batch_size']].
+      learning_rate = 0.0
       gs_t = tf.reshape(global_step, [1])
       loss_t = tf.reshape(loss, [1])
       lr_t = tf.reshape(learning_rate, [1])
