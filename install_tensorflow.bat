@@ -1,2 +1,2 @@
-pip install tensorflow=1.12
+pip install tensorflow==1.12
 pause
