@@ -4,4 +4,5 @@ python resnet_main.py ^
 --model_dir="G:\\TPU\model" ^
 --tpu="" ^
 --precision="float32"
+--data_format="channels_last"
 pause
