@@ -478,6 +478,7 @@ def resnet_model_fn(features, labels, mode, params):
       # expects [batch_size, ...] Tensors, thus reshape to introduce a batch
       # dimension. These Tensors are implicitly concatenated to
       # [params['batch_size']].
+      learning_rate = 0.0
       gs_t = tf.reshape(global_step, [1])
       loss_t = tf.reshape(loss, [1])
       lr_t = tf.reshape(learning_rate, [1])
@@ -624,6 +625,7 @@ def main(unused_argv):
   if FLAGS.bigtable_instance:
     tf.logging.info('Using Bigtable dataset, table %s', FLAGS.bigtable_table)
     select_train, select_eval = _select_tables_from_flags()
+    '''
     imagenet_train, imagenet_eval = [imagenet_input.ImageNetBigtableInput(
         is_training=is_training,
         use_bfloat16=use_bfloat16,
@@ -631,11 +633,13 @@ def main(unused_argv):
         selection=selection) for (is_training, selection) in
                                      [(True, select_train),
                                       (False, select_eval)]]
+    '''
   else:
     if FLAGS.data_dir == FAKE_DATA_DIR:
       tf.logging.info('Using fake dataset.')
     else:
       tf.logging.info('Using dataset: %s', FLAGS.data_dir)
+    '''
     imagenet_train, imagenet_eval = [
         imagenet_input.ImageNetInput(
             is_training=is_training,
@@ -646,6 +650,10 @@ def main(unused_argv):
             num_parallel_calls=FLAGS.num_parallel_calls,
             use_bfloat16=use_bfloat16) for is_training in [True, False]
     ]
+    '''
+  #Fixed test input boris town 20190220
+  imagenet_train = [[[1.0,0.3,0.5,0.0,0.0,1.0],[0.3,0.7]],[[0.0,0.4,0.7,1.0,1.0,0.0],[0.66,0.34]]]
+  imagenet_eval = [[1.0,0.3,0.5,0.0,0.0,1.0],[0.0,0.4,0.7,1.0,1.0,0.0]]
 
   steps_per_epoch = FLAGS.num_train_images // FLAGS.train_batch_size
   eval_steps = FLAGS.num_eval_images // FLAGS.eval_batch_size

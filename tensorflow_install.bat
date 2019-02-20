@@ -5,4 +5,5 @@ pip install absl-py
 pip install tensorflow==1.12
 pip install numpy --upgrade
 pip install apache-beam --upgrade
+pip install -U protobuf
 pause
