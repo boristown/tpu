@@ -667,7 +667,7 @@ def main(unused_argv):
       try:
         start_timestamp = time.time()  # This time will include compilation time
         eval_results = resnet_classifier.evaluate(
-            input_fn=imagenet_eval.input_fn,
+            input_fn=imagenet_eval,
             steps=eval_steps,
             checkpoint_path=ckpt)
         elapsed_time = int(time.time() - start_timestamp)
@@ -715,7 +715,7 @@ def main(unused_argv):
                 output_dir=FLAGS.model_dir, tpu=FLAGS.tpu)
             )
       resnet_classifier.train(
-          input_fn=imagenet_train.input_fn,
+          input_fn=imagenet_train,
           max_steps=FLAGS.train_steps,
           hooks=hooks)
 
@@ -727,7 +727,7 @@ def main(unused_argv):
         next_checkpoint = min(current_step + FLAGS.steps_per_eval,
                               FLAGS.train_steps)
         resnet_classifier.train(
-            input_fn=imagenet_train.input_fn, max_steps=next_checkpoint)
+            input_fn=imagenet_train, max_steps=next_checkpoint)
         current_step = next_checkpoint
 
         tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
@@ -739,7 +739,7 @@ def main(unused_argv):
         # consistent, the evaluated images are also consistent.
         tf.logging.info('Starting to evaluate.')
         eval_results = resnet_classifier.evaluate(
-            input_fn=imagenet_eval.input_fn,
+            input_fn=imagenet_tra,
             steps=FLAGS.num_eval_images // FLAGS.eval_batch_size)
         tf.logging.info('Eval results at step %d: %s',
                         next_checkpoint, eval_results)
