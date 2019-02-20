@@ -297,7 +297,6 @@ def learning_rate_schedule(train_steps, current_epoch):
                           decay_rate, scaled_lr * mult)
   return decay_rate
 
-
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
 
@@ -625,7 +624,7 @@ def main(unused_argv):
   if FLAGS.bigtable_instance:
     tf.logging.info('Using Bigtable dataset, table %s', FLAGS.bigtable_table)
     select_train, select_eval = _select_tables_from_flags()
-    '''
+    
     imagenet_train, imagenet_eval = [imagenet_input.ImageNetBigtableInput(
         is_training=is_training,
         use_bfloat16=use_bfloat16,
@@ -633,13 +632,13 @@ def main(unused_argv):
         selection=selection) for (is_training, selection) in
                                      [(True, select_train),
                                       (False, select_eval)]]
-    '''
+    
   else:
     if FLAGS.data_dir == FAKE_DATA_DIR:
       tf.logging.info('Using fake dataset.')
     else:
       tf.logging.info('Using dataset: %s', FLAGS.data_dir)
-    '''
+    
     imagenet_train, imagenet_eval = [
         imagenet_input.ImageNetInput(
             is_training=is_training,
@@ -650,10 +649,11 @@ def main(unused_argv):
             num_parallel_calls=FLAGS.num_parallel_calls,
             use_bfloat16=use_bfloat16) for is_training in [True, False]
     ]
-    '''
+  '''
   #Fixed test input boris town 20190220
   imagenet_train = [[[1.0,0.3,0.5,0.0,0.0,1.0],[0.3,0.7]],[[0.0,0.4,0.7,1.0,1.0,0.0],[0.66,0.34]]]
   imagenet_eval = [[1.0,0.3,0.5,0.0,0.0,1.0],[0.0,0.4,0.7,1.0,1.0,0.0]]
+  '''
 
   steps_per_epoch = FLAGS.num_train_images // FLAGS.train_batch_size
   eval_steps = FLAGS.num_eval_images // FLAGS.eval_batch_size
@@ -667,7 +667,7 @@ def main(unused_argv):
       try:
         start_timestamp = time.time()  # This time will include compilation time
         eval_results = resnet_classifier.evaluate(
-            input_fn=imagenet_eval,
+            input_fn=imagenet_eval.input_fn,
             steps=eval_steps,
             checkpoint_path=ckpt)
         elapsed_time = int(time.time() - start_timestamp)
@@ -715,7 +715,7 @@ def main(unused_argv):
                 output_dir=FLAGS.model_dir, tpu=FLAGS.tpu)
             )
       resnet_classifier.train(
-          input_fn=imagenet_train,
+          input_fn=imagenet_train.input_fn,
           max_steps=FLAGS.train_steps,
           hooks=hooks)
 
@@ -727,7 +727,7 @@ def main(unused_argv):
         next_checkpoint = min(current_step + FLAGS.steps_per_eval,
                               FLAGS.train_steps)
         resnet_classifier.train(
-            input_fn=imagenet_train, max_steps=next_checkpoint)
+            input_fn=imagenet_train.input_fn, max_steps=next_checkpoint)
         current_step = next_checkpoint
 
         tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
