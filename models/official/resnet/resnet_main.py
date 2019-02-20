@@ -739,7 +739,7 @@ def main(unused_argv):
         # consistent, the evaluated images are also consistent.
         tf.logging.info('Starting to evaluate.')
         eval_results = resnet_classifier.evaluate(
-            input_fn=imagenet_tra,
+            input_fn=imagenet_train.input_fn,
             steps=FLAGS.num_eval_images // FLAGS.eval_batch_size)
         tf.logging.info('Eval results at step %d: %s',
                         next_checkpoint, eval_results)
