@@ -85,17 +85,17 @@ class ImageNetTFExampleInput(object):
     return images, labels
 
   def dataset_parser(self, value):
-    """Parses an image and its label from a serialized ResNet-50 TFExample.
+    """Parses prices and its operations from a serialized ResNet-50 TFExample.
 
     Args:
       value: serialized string containing an ImageNet TFExample.
 
     Returns:
-      Returns a tuple of (image, label) from the TFExample.
+      Returns a tuple of (prices, operations) from the TFExample.
     """
     keys_to_features = {
         'prices/encoded': tf.FixedLenFeature((), tf.string, ''),
-        'prices/class/label': tf.FixedLenFeature([], tf.int64, -1),
+        'prices/class/operations': tf.FixedLenFeature([], tf.int64, -1),
     }
 
     parsed = tf.parse_single_example(value, keys_to_features)
@@ -108,10 +108,10 @@ class ImageNetTFExampleInput(object):
         use_bfloat16=self.use_bfloat16)
 
     # Subtract one so that labels are in [0, 1000).
-    label = tf.cast(
-        tf.reshape(parsed['prices/class/label'], shape=[]), dtype=tf.int32) - 1
+    operations = tf.cast(
+        tf.reshape(parsed['prices/class/operations'], shape=[]), dtype=tf.int32) - 1
 
-    return prices, label
+    return prices, operations
 
   @abc.abstractmethod
   def make_source_dataset(self, index, num_hosts):
