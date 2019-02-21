@@ -94,24 +94,24 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (image, label) from the TFExample.
     """
     keys_to_features = {
-        'image/encoded': tf.FixedLenFeature((), tf.string, ''),
-        'image/class/label': tf.FixedLenFeature([], tf.int64, -1),
+        'prices/encoded': tf.FixedLenFeature((), tf.string, ''),
+        'prices/class/label': tf.FixedLenFeature([], tf.int64, -1),
     }
 
     parsed = tf.parse_single_example(value, keys_to_features)
-    image_bytes = tf.reshape(parsed['image/encoded'], shape=[])
+    prices_bytes = tf.reshape(parsed['prices/encoded'], shape=[])
 
-    image = self.image_preprocessing_fn(
-        image_bytes=image_bytes,
+    prices = self.prices_preprocessing_fn(
+        prices_bytes=prices_bytes,
         is_training=self.is_training,
-        image_size=self.image_size,
+        prices_size=self.prices_size,
         use_bfloat16=self.use_bfloat16)
 
     # Subtract one so that labels are in [0, 1000).
     label = tf.cast(
-        tf.reshape(parsed['image/class/label'], shape=[]), dtype=tf.int32) - 1
+        tf.reshape(parsed['prices/class/label'], shape=[]), dtype=tf.int32) - 1
 
-    return image, label
+    return prices, label
 
   @abc.abstractmethod
   def make_source_dataset(self, index, num_hosts):
