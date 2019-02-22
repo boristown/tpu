@@ -28,7 +28,8 @@ import numpy as np
 import tensorflow as tf
 
 from common import tpu_profiler_hook
-from official.resnet import imagenet_input
+#from official.resnet import imagenet_input2
+import imagenet_input
 from official.resnet import lars_util
 from official.resnet import resnet_model
 from tensorflow.contrib import summary
@@ -110,7 +111,7 @@ flags.DEFINE_integer(
     'num_eval_images', default=50000, help='Size of evaluation data set.')
 
 flags.DEFINE_integer(
-    'num_label_classes', default=1000, help='Number of classes, at least 2')
+    'num_label_classes', default=16, help='Number of classes, at least 2')
 
 flags.DEFINE_integer(
     'steps_per_eval', default=1251,
@@ -324,13 +325,15 @@ def resnet_model_fn(features, labels, mode, params):
     features = tf.transpose(features, [0, 3, 1, 2])
 
   if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
-    image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
-    features = tf.reshape(features, [image_size, image_size, 3, -1])
+    #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
+    image_size = 3
+    #features = tf.reshape(features, [image_size, image_size, 3, -1])
+    features = tf.reshape(features, [image_size, image_size, 2, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
 
   # Normalize the image to zero mean and unit variance.
-  features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
-  features /= tf.constant(STDDEV_RGB, shape=[1, 1, 3], dtype=features.dtype)
+  #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
+  #features /= tf.constant(STDDEV_RGB, shape=[1, 1, 3], dtype=features.dtype)
 
   # DropBlock keep_prob for the 4 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
@@ -389,7 +392,9 @@ def resnet_model_fn(features, labels, mode, params):
   batch_size = params['batch_size']   # pylint: disable=unused-variable
 
   # Calculate loss, which includes softmax cross entropy and L2 regularization.
-  one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
+  #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
+  one_hot_labels = tf.transpose(labels, [1, 0])
+  
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
       onehot_labels=one_hot_labels,
@@ -638,7 +643,6 @@ def main(unused_argv):
       tf.logging.info('Using fake dataset.')
     else:
       tf.logging.info('Using dataset: %s', FLAGS.data_dir)
-    
     imagenet_train, imagenet_eval = [
         imagenet_input.ImageNetInput(
             is_training=is_training,

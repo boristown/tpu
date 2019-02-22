@@ -448,7 +448,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_dense')
     return inputs
 
-  model.default_image_size = 224
+  model.default_image_size = 3
   return model
 
 

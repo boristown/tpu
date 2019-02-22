@@ -61,30 +61,34 @@ class ImageNetTFExampleInput(object):
                image_size=224,
                transpose_input=False,
                num_parallel_calls=8):
+    #raise Exception(f'ImageNetTFExampleInput init')
     self.image_preprocessing_fn = resnet_preprocessing.preprocess_image
     self.is_training = is_training
     self.use_bfloat16 = use_bfloat16
     self.transpose_input = transpose_input
     self.image_size = image_size
     self.num_parallel_calls = num_parallel_calls
+    self.priceSquared = 3
+    self.channelInputs = 2
+    self.operationOutputs = 16
 
-  def set_shapes(self, batch_size, images, labels):
+  def set_shapes(self, batch_size, prices, operations):
     """Statically set the batch_size dimension."""
     if self.transpose_input:
-      images.set_shape(images.get_shape().merge_with(
+      prices.set_shape(prices.get_shape().merge_with(
           tf.TensorShape([None, None, None, batch_size])))
-      images = tf.reshape(images, [-1])
-      labels.set_shape(labels.get_shape().merge_with(
-          tf.TensorShape([batch_size])))
+      prices = tf.reshape(prices, [-1])
+      operations.set_shape(operations.get_shape().merge_with(
+          tf.TensorShape([None, batch_size])))
     else:
-      images.set_shape(images.get_shape().merge_with(
+      prices.set_shape(prices.get_shape().merge_with(
           tf.TensorShape([batch_size, None, None, None])))
-      labels.set_shape(labels.get_shape().merge_with(
-          tf.TensorShape([batch_size])))
+      operations.set_shape(operations.get_shape().merge_with(
+          tf.TensorShape([batch_size, None])))
 
-    return images, labels
+    return prices, operations
 
-  def dataset_parser(self, value):
+  def dataset_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
 
     Args:
@@ -93,6 +97,19 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
+    # Decode the csv_line to tensor.
+    record_defaults = [[1.0] for col in range(self.priceSquared*self.priceSquared*self.channelInputs+self.operationOutputs)]
+    items = tf.decode_csv(line, record_defaults)
+    prices = items[0:self.priceSquared*self.priceSquared*self.channelInputs]
+    operations = items[self.priceSquared*self.priceSquared*self.channelInputs:self.priceSquared*self.priceSquared*self.channelInputs+self.operationOutputs]
+
+    prices = tf.cast(prices, tf.float32)
+    prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
+    operations = tf.cast(operations, tf.float32)
+    tf.logging.info(f"operations={operations}")
+    #raise Exception('This is a dataset parser')
+    return prices,operations
+    '''
     keys_to_features = {
         'prices/encoded': tf.FixedLenFeature((), tf.string, ''),
         'prices/class/operations': tf.FixedLenFeature([], tf.int64, -1),
@@ -112,7 +129,8 @@ class ImageNetTFExampleInput(object):
         tf.reshape(parsed['prices/class/operations'], shape=[]), dtype=tf.int32) - 1
 
     return prices, operations
-
+    '''
+    
   @abc.abstractmethod
   def make_source_dataset(self, index, num_hosts):
     """Makes dataset of serialized TFExamples.
@@ -142,7 +160,7 @@ class ImageNetTFExampleInput(object):
     Returns:
       A `tf.data.Dataset` object.
     """
-
+    #raise Exception(f'input_fn in class ImageNetTFExampleInput params:{params}')
     # Retrieves the batch size for the current shard. The # of shards is
     # computed according to the input pipeline deployment. See
     # tf.contrib.tpu.RunConfig for details.
@@ -176,7 +194,7 @@ class ImageNetTFExampleInput(object):
     # Transpose for performance on TPU
     if self.transpose_input:
       dataset = dataset.map(
-          lambda images, labels: (tf.transpose(images, [1, 2, 3, 0]), labels),
+          lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
           num_parallel_calls=self.num_parallel_calls)
 
     # Assign static batch size dimension
@@ -226,6 +244,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       num_parallel_calls: concurrency level to use when reading data from disk.
       cache: if true, fill the dataset by repeating from its cache
     """
+    #raise Exception(f'ImageNetInput init')
     super(ImageNetInput, self).__init__(
         is_training=is_training,
         image_size=image_size,
@@ -254,6 +273,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
   def dataset_parser(self, value):
     """See base class."""
+    #raise Exception('This is dataset_parser in class ImageNetInput')
     if not self.data_dir:
       return value, tf.constant(0, tf.int32)
     return super(ImageNetInput, self).dataset_parser(value)
@@ -266,8 +286,8 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     # Shuffle the filenames to ensure better randomization.
     file_pattern = os.path.join(
-        self.data_dir, 'train-*' if self.is_training else 'validation-*')
-
+      self.data_dir, 'train-*' if self.is_training else 'validation-*')
+    #raise Exception(f'file_pattern = {filename} in class ImageNetInput')
     # For multi-host training, we want each hosts to always process the same
     # subset of files.  Each host only sees a subset of the entire dataset,
     # allowing us to cache larger datasets in memory.
@@ -278,6 +298,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       dataset = dataset.repeat()
 
     def fetch_dataset(filename):
+      #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
       buffer_size = 8 * 1024 * 1024  # 8 MiB per file
       #dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
       dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
