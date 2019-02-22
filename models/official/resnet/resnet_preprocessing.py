@@ -19,7 +19,9 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-IMAGE_SIZE = 224
+IMAGE_SIZE = 3
+CHANNEL_COUNT = 2
+LABEL_COUNT = 16
 CROP_PADDING = 32
 
 
@@ -70,7 +72,7 @@ def distorted_bounding_box_crop(image_bytes,
     offset_y, offset_x, _ = tf.unstack(bbox_begin)
     target_height, target_width, _ = tf.unstack(bbox_size)
     crop_window = tf.stack([offset_y, offset_x, target_height, target_width])
-    image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=3)
+    image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=CHANNEL_COUNT)
 
     return image
 
@@ -94,7 +96,7 @@ def _decode_and_random_crop(image_bytes, image_size):
       max_attempts=10,
       scope=None)
   original_shape = tf.image.extract_jpeg_shape(image_bytes)
-  bad = _at_least_x_are_equal(original_shape, tf.shape(image), 3)
+  bad = _at_least_x_are_equal(original_shape, tf.shape(image), CHANNEL_COUNT)
 
   image = tf.cond(
       bad,
@@ -120,7 +122,7 @@ def _decode_and_center_crop(image_bytes, image_size):
   offset_width = ((image_width - padded_center_crop_size) + 1) // 2
   crop_window = tf.stack([offset_height, offset_width,
                           padded_center_crop_size, padded_center_crop_size])
-  image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=3)
+  image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=CHANNEL_COUNT)
   image = tf.image.resize_bicubic([image], [image_size, image_size])[0]
 
   return image
@@ -145,7 +147,7 @@ def preprocess_for_train(image_bytes, use_bfloat16, image_size=IMAGE_SIZE):
   """
   image = _decode_and_random_crop(image_bytes, image_size)
   image = _flip(image)
-  image = tf.reshape(image, [image_size, image_size, 3])
+  image = tf.reshape(image, [image_size, image_size, CHANNEL_COUNT])
   image = tf.image.convert_image_dtype(
       image, dtype=tf.bfloat16 if use_bfloat16 else tf.float32)
   return image
@@ -163,7 +165,7 @@ def preprocess_for_eval(image_bytes, use_bfloat16, image_size=IMAGE_SIZE):
     A preprocessed image `Tensor`.
   """
   image = _decode_and_center_crop(image_bytes, image_size)
-  image = tf.reshape(image, [image_size, image_size, 3])
+  image = tf.reshape(image, [image_size, image_size, CHANNEL_COUNT])
   image = tf.image.convert_image_dtype(
       image, dtype=tf.bfloat16 if use_bfloat16 else tf.float32)
   return image

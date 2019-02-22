@@ -25,6 +25,10 @@ import os
 import tensorflow as tf
 from official.resnet import resnet_preprocessing
 
+IMAGE_SIZE = 3
+CHANNEL_COUNT = 2
+LABEL_COUNT = 16
+
 def image_serving_input_fn():
   """Serving input fn for raw images."""
 
@@ -58,7 +62,7 @@ class ImageNetTFExampleInput(object):
   def __init__(self,
                is_training,
                use_bfloat16,
-               image_size=224,
+               image_size=IMAGE_SIZE,
                transpose_input=False,
                num_parallel_calls=8):
     #raise Exception(f'ImageNetTFExampleInput init')
@@ -68,9 +72,9 @@ class ImageNetTFExampleInput(object):
     self.transpose_input = transpose_input
     self.image_size = image_size
     self.num_parallel_calls = num_parallel_calls
-    self.priceSquared = 3
-    self.channelInputs = 2
-    self.operationOutputs = 16
+    self.priceSquared = IMAGE_SIZE
+    self.channelInputs = CHANNEL_COUNT
+    self.operationOutputs = LABEL_COUNT
 
   def set_shapes(self, batch_size, prices, operations):
     """Statically set the batch_size dimension."""
@@ -227,7 +231,7 @@ class ImageNetInput(ImageNetTFExampleInput):
                use_bfloat16,
                transpose_input,
                data_dir,
-               image_size=224,
+               image_size=IMAGE_SIZE,
                num_parallel_calls=8,
                cache=False):
     """Create an input from TFRecord files.
@@ -268,7 +272,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       a tensor representing a null image.
     """
     del data  # Unused since output is constant regardless of input
-    return tf.zeros([self.image_size, self.image_size, 3], tf.bfloat16
+    return tf.zeros([self.image_size, self.image_size, CHANNEL_COUNT], tf.bfloat16
                     if self.use_bfloat16 else tf.float32)
 
   def dataset_parser(self, value):

@@ -27,7 +27,9 @@ import tensorflow as tf
 
 BATCH_NORM_DECAY = 0.9
 BATCH_NORM_EPSILON = 1e-5
-
+IMAGE_SIZE = 3
+CHANNEL_COUNT = 2
+LABEL_COUNT = 16
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
                     data_format='channels_first'):
@@ -246,12 +248,12 @@ def residual_block(inputs, filters, is_training, strides,
                                data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=2, strides=strides,
+      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=strides,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=2, strides=1,
+      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
                            data_format=data_format)
@@ -308,7 +310,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=2, strides=strides,
+      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=strides,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
   inputs = dropblock(
@@ -401,13 +403,13 @@ def resnet_v1_generator(block_fn, layers, num_classes,
   def model(inputs, is_training):
     """Creation of the model graph."""
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=64, kernel_size=7, strides=2,
+        inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
         data_format=data_format)
     inputs = tf.identity(inputs, 'initial_conv')
     inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
     inputs = tf.layers.max_pooling2d(
-        inputs=inputs, pool_size=3, strides=2, padding='SAME',
+        inputs=inputs, pool_size=3, strides=CHANNEL_COUNT, padding='SAME',
         data_format=data_format)
     inputs = tf.identity(inputs, 'initial_max_pool')
 
@@ -448,7 +450,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_dense')
     return inputs
 
-  model.default_image_size = 3
+  model.default_image_size = IMAGE_SIZE
   return model
 
 

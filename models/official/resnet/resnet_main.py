@@ -232,7 +232,7 @@ flags.DEFINE_bool(
 flags.DEFINE_bool(
     'use_async_checkpointing', default=False, help=('Enable async checkpoint'))
 
-flags.DEFINE_integer('image_size', 224, 'The input image size.')
+flags.DEFINE_integer('image_size', 3, 'The input image size.')
 
 flags.DEFINE_string(
     'dropblock_groups', '',
