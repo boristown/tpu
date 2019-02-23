@@ -515,13 +515,18 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       predictions = tf.argmax(logits, axis=1)
-      top_1_accuracy = tf.metrics.accuracy(labels, predictions)
-      in_top_5 = tf.cast(tf.nn.in_top_k(logits, labels, 5), tf.float32)
-      top_5_accuracy = tf.metrics.mean(in_top_5)
+      labels_top_1 = tf.argmax(labels, axis=1)
+      # top_1_accuracy = tf.metrics.accuracy(labels, predictions)
+      top_1_accuracy = tf.metrics.accuracy(labels_top_1, predictions)
+      
+      # in_top_5 = tf.cast(tf.nn.in_top_k(logits, labels, 5), tf.float32)
+      in_top_2 = tf.cast(tf.nn.in_top_k(logits, labels_top_1, 2), tf.float32)
+      top_2_accuracy = tf.metrics.mean(in_top_2)
 
       return {
           'top_1_accuracy': top_1_accuracy,
-          'top_5_accuracy': top_5_accuracy,
+          # 'top_5_accuracy': top_5_accuracy,
+          'top_2_accuracy': top_2_accuracy,
       }
 
     eval_metrics = (metric_fn, [labels, logits])

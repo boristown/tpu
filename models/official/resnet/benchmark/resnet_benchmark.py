@@ -213,14 +213,14 @@ def main(unused_argv):
           current_epoch,
           elapsed_hours,
           '%.2f' % (eval_results['top_1_accuracy'] * 100),
-          '%.2f' % (eval_results['top_5_accuracy'] * 100),
+          '%.2f' % (eval_results['top_2_accuracy'] * 100),
       ])
 
       time.sleep(60)
 
     with tf.gfile.GFile(os.path.join(FLAGS.model_dir, 'results.tsv'), 'wb') as tsv_file:   # pylint: disable=line-too-long
       writer = csv.writer(tsv_file, delimiter='\t')
-      writer.writerow(['epoch', 'hours', 'top1Accuracy', 'top5Accuracy'])
+      writer.writerow(['epoch', 'hours', 'top1Accuracy', 'top2Accuracy'])
       writer.writerows(results)
 
 
