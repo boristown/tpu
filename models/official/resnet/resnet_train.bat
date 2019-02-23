@@ -1,5 +1,5 @@
 python resnet_main.py ^
---train_steps=120 ^
+--train_steps=20 ^
 --train_batch_size=6 ^
 --eval_batch_size=6 ^
 --num_train_images=6 ^
@@ -9,7 +9,9 @@ python resnet_main.py ^
 --resnet_depth=50 ^
 --use_tpu=False ^
 --data_dir="G:\TPU\data" ^
+--predict_dir="G:\TPU\price" ^
 --model_dir="G:\TPU\model" ^
+--export_dir="G:\TPU\export" ^
 --tpu="" ^
 --precision="float32" ^
 --data_format="channels_last"

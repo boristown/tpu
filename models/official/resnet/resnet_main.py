@@ -31,7 +31,8 @@ from common import tpu_profiler_hook
 #from official.resnet import imagenet_input2
 import imagenet_input
 from official.resnet import lars_util
-from official.resnet import resnet_model
+#from official.resnet import resnet_model
+import resnet_model
 from tensorflow.contrib import summary
 from tensorflow.contrib.tpu.python.tpu import async_checkpoint
 from tensorflow.contrib.training.python.training import evaluation
@@ -68,6 +69,11 @@ flags.DEFINE_string(
 flags.DEFINE_string(
     'data_dir', default=FAKE_DATA_DIR,
     help=('The directory where the ImageNet input data is stored. Please see'
+          ' the README.md for the expected data format.'))
+
+flags.DEFINE_string(
+    'predict_dir', default=None,
+    help=('The directory where the source prices for prediction is stored. Please see'
           ' the README.md for the expected data format.'))
 
 flags.DEFINE_string(
@@ -652,17 +658,13 @@ def main(unused_argv):
         imagenet_input.ImageNetInput(
             is_training=is_training,
             data_dir=FLAGS.data_dir,
+            predict_dir=FLAGS.predict_dir,
             transpose_input=FLAGS.transpose_input,
             cache=FLAGS.use_cache and is_training,
             image_size=FLAGS.image_size,
             num_parallel_calls=FLAGS.num_parallel_calls,
             use_bfloat16=use_bfloat16) for is_training in [True, False]
     ]
-  '''
-  #Fixed test input boris town 20190220
-  imagenet_train = [[[1.0,0.3,0.5,0.0,0.0,1.0],[0.3,0.7]],[[0.0,0.4,0.7,1.0,1.0,0.0],[0.66,0.34]]]
-  imagenet_eval = [[1.0,0.3,0.5,0.0,0.0,1.0],[0.0,0.4,0.7,1.0,1.0,0.0]]
-  '''
 
   steps_per_epoch = FLAGS.num_train_images // FLAGS.train_batch_size
   eval_steps = FLAGS.num_eval_images // FLAGS.eval_batch_size
@@ -748,7 +750,7 @@ def main(unused_argv):
         # consistent, the evaluated images are also consistent.
         tf.logging.info('Starting to evaluate.')
         eval_results = resnet_classifier.evaluate(
-            input_fn=imagenet_train.input_fn,
+            input_fn=imagenet_eval.input_fn,
             steps=FLAGS.num_eval_images // FLAGS.eval_batch_size)
         tf.logging.info('Eval results at step %d: %s',
                         next_checkpoint, eval_results)
@@ -757,6 +759,12 @@ def main(unused_argv):
       tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                       FLAGS.train_steps, elapsed_time)
 
+    tf.logging.info('Starting to predict.')
+    predictions = resnet_classifier.predict(
+      input_fn=imagenet_train.predict_input_fn
+      )
+    tf.logging.info(f'predictions={predictions},len={len(list(predictions))},dim={list(predictions).shape}')
+    
     if FLAGS.export_dir is not None:
       # The guide to serve a exported TensorFlow model is at:
       #    https://www.tensorflow.org/serving/serving_basic

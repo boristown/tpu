@@ -23,7 +23,8 @@ from collections import namedtuple
 import functools
 import os
 import tensorflow as tf
-from official.resnet import resnet_preprocessing
+# from official.resnet import resnet_preprocessing
+import resnet_preprocessing
 
 IMAGE_SIZE = 3
 CHANNEL_COUNT = 2
@@ -92,6 +93,18 @@ class ImageNetTFExampleInput(object):
 
     return prices, operations
 
+  def set_predict_shapes(self, batch_size, prices):
+    """Statically set the batch_size dimension."""
+    if self.transpose_input:
+      prices.set_shape(prices.get_shape().merge_with(
+          tf.TensorShape([None, None, None, batch_size])))
+      prices = tf.reshape(prices, [-1])
+    else:
+      prices.set_shape(prices.get_shape().merge_with(
+          tf.TensorShape([batch_size, None, None, None])))
+
+    return prices
+  
   def dataset_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
 
@@ -209,6 +222,63 @@ class ImageNetTFExampleInput(object):
     return dataset
 
 
+  def predict_input_fn(self, params):
+    """Input function which provides a single batch for predict.
+
+    Args:
+      params: `dict` of parameters passed from the `TPUEstimator`.
+          `params['batch_size']` is always provided and should be used as the
+          effective batch size.
+
+    Returns:
+      A `tf.data.Dataset` object.
+    """
+    #raise Exception(f'input_fn in class ImageNetTFExampleInput params:{params}')
+    # Retrieves the batch size for the current shard. The # of shards is
+    # computed according to the input pipeline deployment. See
+    # tf.contrib.tpu.RunConfig for details.
+    #batch_size = params['batch_size']
+
+    # TODO(dehao): Replace the following with params['context'].current_host
+    if 'context' in params:
+      current_host = params['context'].current_input_fn_deployment()[1]
+      num_hosts = params['context'].num_hosts
+    else:
+      current_host = 0
+      num_hosts = 1
+
+    predict_dataset = self.make_predict_dataset(current_host, num_hosts)
+
+    # Use the fused map-and-batch operation.
+    #
+    # For XLA, we must used fixed shapes. Because we repeat the source training
+    # dataset indefinitely, we can use `drop_remainder=True` to get fixed-size
+    # batches without dropping any training examples.
+    #
+    # When evaluating, `drop_remainder=True` prevents accidentally evaluating
+    # the same image twice by dropping the final batch if it is less than a full
+    # batch size. As long as this validation is done with consistent batch size,
+    # exactly the same images will be used.
+    predict_dataset = predict_dataset.apply(
+      tf.contrib.data.map(self.dataset_parser))
+#        tf.contrib.data.map_and_batch(
+#            self.dataset_parser, batch_size=batch_size,
+#            num_parallel_batches=self.num_parallel_calls, drop_remainder=True))
+
+    # Transpose for performance on TPU
+    if self.transpose_input:
+      predict_dataset = predict_dataset.map(
+          lambda prices: (tf.transpose(prices, [1, 2, 3, 0])),
+          num_parallel_calls=self.num_parallel_calls)
+
+    # Assign static batch size dimension
+    predict_dataset = predict_dataset.map(functools.partial(self.set_predict_shapes))
+
+    # Prefetch overlaps in-feed with training
+    predict_dataset = predict_dataset.prefetch(tf.contrib.data.AUTOTUNE)
+    return predict_dataset
+
+
 class ImageNetInput(ImageNetTFExampleInput):
   """Generates ImageNet input_fn from a series of TFRecord files.
 
@@ -231,6 +301,7 @@ class ImageNetInput(ImageNetTFExampleInput):
                use_bfloat16,
                transpose_input,
                data_dir,
+               predict_dir,
                image_size=IMAGE_SIZE,
                num_parallel_calls=8,
                cache=False):
@@ -255,6 +326,7 @@ class ImageNetInput(ImageNetTFExampleInput):
         use_bfloat16=use_bfloat16,
         transpose_input=transpose_input)
     self.data_dir = data_dir
+    self.predict_dir = predict_dir
     # TODO(b/112427086):  simplify the choice of input source
     if self.data_dir == 'null' or not self.data_dir:
       self.data_dir = None
@@ -320,7 +392,43 @@ class ImageNetInput(ImageNetTFExampleInput):
       dataset = dataset.shuffle(1024)
     return dataset
 
+  def make_predict_dataset(self, index, num_hosts):
+    """See base class."""
+    if not self.predict_dir:
+      tf.logging.info('Undefined predict_dir implies null input')
+      return tf.data.Dataset.range(1).repeat().map(self._get_null_input)
 
+    # Shuffle the filenames to ensure better randomization.
+    price_file_pattern = os.path.join(
+      self.predict_dir, 'price-*')
+    # For multi-host training, we want each hosts to always process the same
+    # subset of files.  Each host only sees a subset of the entire dataset,
+    # allowing us to cache larger datasets in memory.
+    predict_dataset = tf.data.Dataset.list_files(price_file_pattern, shuffle=False)
+    predict_dataset = predict_dataset.shard(num_hosts, index)
+
+    #if self.is_training and not self.cache:
+    #  dataset = dataset.repeat()
+
+    def fetch_predict_dataset(filename):
+      #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
+      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
+      predict_dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
+      return predict_dataset
+
+    # Read the data from disk in parallel
+    predict_dataset = predict_dataset.apply(
+        tf.contrib.data.parallel_interleave(
+            fetch_predict_dataset, cycle_length=64, sloppy=True))
+    '''
+    if self.cache:
+      predict_dataset = predict_dataset.cache().apply(
+          tf.contrib.data.shuffle_and_repeat(1024 * 16))
+    else:
+      predict_dataset = dataset.shuffle(1024)
+    '''
+    return predict_dataset
+  
 # Defines a selection of data from a Cloud Bigtable.
 BigtableSelection = namedtuple('BigtableSelection',
                                ['project',
