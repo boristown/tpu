@@ -9,7 +9,8 @@ python resnet_main.py ^
 --resnet_depth=50 ^
 --use_tpu=False ^
 --data_dir="G:\TPU\data" ^
---predict_dir="G:\TPU\price" ^
+--prices_dir="G:\TPU\price" ^
+--predict_dir="G:\TPU\predict" ^
 --model_dir="G:\TPU\model" ^
 --export_dir="G:\TPU\export" ^
 --tpu="" ^

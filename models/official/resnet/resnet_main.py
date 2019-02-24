@@ -72,8 +72,13 @@ flags.DEFINE_string(
           ' the README.md for the expected data format.'))
 
 flags.DEFINE_string(
-    'predict_dir', default=None,
+    'prices_dir', default=None,
     help=('The directory where the source prices for prediction is stored. Please see'
+          ' the README.md for the expected data format.'))
+
+flags.DEFINE_string(
+    'predict_dir', default=None,
+    help=('The directory where the prediction result is stored. Please see'
           ' the README.md for the expected data format.'))
 
 flags.DEFINE_string(
@@ -658,6 +663,7 @@ def main(unused_argv):
         imagenet_input.ImageNetInput(
             is_training=is_training,
             data_dir=FLAGS.data_dir,
+            prices_dir=FLAGS.prices_dir,
             predict_dir=FLAGS.predict_dir,
             transpose_input=FLAGS.transpose_input,
             cache=FLAGS.use_cache and is_training,
@@ -763,8 +769,11 @@ def main(unused_argv):
     predictions = resnet_classifier.predict(
       input_fn=imagenet_train.predict_input_fn
       )
-    tf.logging.info(f'predictions={predictions},len={len(list(predictions))},dim={list(predictions).shape}')
+    tf.logging.info(f'predictions={predictions}')
     
+    for pred_item in predictions:
+        tf.logging.info(f'pred_item={pred_item}')
+        
     if FLAGS.export_dir is not None:
       # The guide to serve a exported TensorFlow model is at:
       #    https://www.tensorflow.org/serving/serving_basic
