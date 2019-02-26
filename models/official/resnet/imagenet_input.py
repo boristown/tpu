@@ -9,7 +9,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
+# See the License for the specific language governing permissios and
 # limitations under the License.
 # ==============================================================================
 """Efficient ImageNet input pipeline using tf.data.Dataset."""
@@ -221,7 +221,7 @@ class ImageNetTFExampleInput(object):
     return dataset
 
 
-  def predict_input_fn(self, params):
+  def predict_input_fn(self, params, batch_size):
     """Input function which provides a single batch for predict.
 
     Args:
@@ -237,7 +237,7 @@ class ImageNetTFExampleInput(object):
     # computed according to the input pipeline deployment. See
     # tf.contrib.tpu.RunConfig for details.
     #batch_size = params['batch_size']
-    batch_size = 6
+    #batch_size = 6
 
     # TODO(dehao): Replace the following with params['context'].current_host
     if 'context' in params:

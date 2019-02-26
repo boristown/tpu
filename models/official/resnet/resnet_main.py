@@ -20,6 +20,8 @@ from __future__ import print_function
 
 import os
 import time
+import glob
+import csv
 
 from absl import app
 from absl import flags
@@ -101,7 +103,7 @@ flags.DEFINE_integer(
 
 flags.DEFINE_string(
     'mode', default='train_and_eval',
-    help='One of {"train_and_eval", "train", "eval"}.')
+    help='One of {"train_and_eval", "train", "eval", "predict"}.')
 
 flags.DEFINE_integer(
     'train_steps', default=112590,
@@ -337,7 +339,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
     #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
-    image_size = 3
+    image_size = FLAGS.image_size
     #features = tf.reshape(features, [image_size, image_size, 3, -1])
     features = tf.reshape(features, [image_size, image_size, 2, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
@@ -736,8 +738,8 @@ def main(unused_argv):
           max_steps=FLAGS.train_steps,
           hooks=hooks)
 
-    else:
-      assert FLAGS.mode == 'train_and_eval'
+    elif FLAGS.mode == 'train_and_eval':
+      # assert FLAGS.mode == 'train_and_eval'
       while current_step < FLAGS.train_steps:
         # Train for up to steps_per_eval number of steps.
         # At the end of training, a checkpoint will be written to --model_dir.
@@ -756,7 +758,7 @@ def main(unused_argv):
         # consistent, the evaluated images are also consistent.
         tf.logging.info('Starting to evaluate.')
         eval_results = resnet_classifier.evaluate(
-            input_fn=imagenet_eval.input_fn,
+            input_fn= imagenet_eval.input_fn,
             steps=FLAGS.num_eval_images // FLAGS.eval_batch_size)
         tf.logging.info('Eval results at step %d: %s',
                         next_checkpoint, eval_results)
@@ -764,24 +766,47 @@ def main(unused_argv):
       elapsed_time = int(time.time() - start_timestamp)
       tf.logging.info('Finished training up to step %d. Elapsed seconds %d.',
                       FLAGS.train_steps, elapsed_time)
-
-    tf.logging.info('Starting to predict.')
-    predictions = resnet_classifier.predict(
-      input_fn=imagenet_train.predict_input_fn
-      )
-    tf.logging.info(f'predictions={predictions}')
-    
-    for pred_item in predictions:
-        tf.logging.info(f'pred_item={pred_item}')
-        
-    if FLAGS.export_dir is not None:
+    else: # FLAGS.mode == 'predict'
+      
+      price_file_pattern = os.path.join(
+        FLAGS.prices_dir, 'price-*')
+      while True:
+        time.sleep(10)
+        price_files  = glob.glob(price_file_pattern)
+        if len(price_files) == 0:
+          continue
+        tf.logging.info('Starting to predict.')
+        with open(price_files[0],"r") as fcsv:
+          csvreader = csv.reader(fcsv,delimiter = ",")
+          price_batch_size = len(list(csvreader))
+        predictions = resnet_classifier.predict(
+          input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
+          )
+      
+        # Output predictions to predict-0001.csv BorisTown 
+        predict_filename = os.path.join(FLAGS.predict_dir, 'predict-0001.csv')
+        predict_file = open(predict_filename, "w")
+        predict_file.truncate()
+        predict_line = ''
+        for pred_item in predictions:
+          predict_line = ''
+          for pred_operation in pred_item['probabilities']:
+            if predict_line != '':
+              predict_line += ','
+            predict_line += str(pred_operation)
+          predict_file.write(predict_line+'\n')
+        predict_file.close()
+        for price_file in price_files:
+          tf.logging.info('Removing ' + price_file)
+          os.remove(price_file)
+            
+    if FLAGS.export_dir is not None and FLAGS.mode != 'predict':
       # The guide to serve a exported TensorFlow model is at:
       #    https://www.tensorflow.org/serving/serving_basic
       tf.logging.info('Starting to export model.')
       resnet_classifier.export_saved_model(
           export_dir_base=FLAGS.export_dir,
           serving_input_receiver_fn=imagenet_input.image_serving_input_fn)
-
 
 if __name__ == '__main__':
   tf.logging.set_verbosity(tf.logging.INFO)
