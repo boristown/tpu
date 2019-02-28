@@ -94,7 +94,7 @@ class ImageNetTFExampleInput(object):
     return prices, operations
 
   def set_predict_shapes(self, batch_size, prices):
-    tf.logging.info(f'prices.shape2={prices.shape} self.transpose_input={self.transpose_input}')
+    # tf.logging.info(f'prices.shape2={prices.shape} self.transpose_input={self.transpose_input}')
     """Statically set the batch_size dimension."""
     #if self.transpose_input:
       #prices.set_shape(prices.get_shape().merge_with(
@@ -103,7 +103,7 @@ class ImageNetTFExampleInput(object):
     #else:
       #prices.set_shape(prices.get_shape().merge_with(
       #    tf.TensorShape([batch_size, None, None, None])))
-    tf.logging.info(f'prices.shape3={prices.shape}')
+    # tf.logging.info(f'prices.shape3={prices.shape}')
     return prices
   
   def dataset_parser(self, line):
