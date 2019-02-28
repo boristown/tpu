@@ -35,7 +35,8 @@ import tensorflow as tf
 from common import tpu_profiler_hook
 #from official.resnet import imagenet_input2
 import imagenet_input
-from official.resnet import lars_util
+#from official.resnet import lars_util
+import lars_util
 #from official.resnet import resnet_model
 import resnet_model
 from tensorflow.contrib import summary
