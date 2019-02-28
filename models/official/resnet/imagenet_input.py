@@ -135,7 +135,7 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
-    tf.logging.info(f'line={line}')
+    # tf.logging.info(f'line={line}')
     # Decode the csv_line to tensor.
     record_defaults = [[1.0] for col in range(self.priceSquared*self.priceSquared*self.channelInputs)]
     items = tf.decode_csv(line, record_defaults)
@@ -144,7 +144,7 @@ class ImageNetTFExampleInput(object):
     prices = tf.cast(prices, tf.float32)
     prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
     
-    tf.logging.info(f'prices.shape={prices.shape}')
+    # tf.logging.info(f'prices.shape={prices.shape}')
     return prices
   
   @abc.abstractmethod
