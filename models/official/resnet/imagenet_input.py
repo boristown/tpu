@@ -130,6 +130,7 @@ class ImageNetTFExampleInput(object):
       prices = tf.cast(prices, tf.bfloat16)
       operations = tf.cast(operations, tf.bfloat16)
     prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
+    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices,operations
 
   def dataset_predict_parser(self, line):
