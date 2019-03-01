@@ -532,7 +532,7 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-      label = np.reshape(label, [label.shape[0]/FLAGS.num_parallel_calls,label.shape[1]*FLAGS.num_parallel_calls])
+      labels = np.reshape(labels, [labels.shape[0]/FLAGS.num_parallel_calls,labels.shape[1]*FLAGS.num_parallel_calls])
       predictions = tf.argmax(logits, axis=1)
       labels_top_1 = tf.argmax(labels, axis=0)
       # top_1_accuracy = tf.metrics.accuracy(labels, predictions)
