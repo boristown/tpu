@@ -79,6 +79,7 @@ class ImageNetTFExampleInput(object):
 
   def set_shapes(self, batch_size, prices, operations):
     #batch_real_size=batch_size*self.num_parallel_calls
+    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     batch_real_size=batch_size
     """Statically set the batch_size dimension."""
     if self.transpose_input:
