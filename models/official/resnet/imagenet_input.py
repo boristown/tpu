@@ -90,7 +90,7 @@ class ImageNetTFExampleInput(object):
           tf.TensorShape([batch_size, None, None, None])))
       operations.set_shape(operations.get_shape().merge_with(
           tf.TensorShape([batch_size, None])))
-
+    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices, operations
 
   def set_predict_shapes(self, batch_size, prices):
