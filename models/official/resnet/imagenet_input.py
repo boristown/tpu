@@ -123,6 +123,9 @@ class ImageNetTFExampleInput(object):
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       operations = tf.cast(operations, tf.float32)
+    else:
+      prices = tf.cast(prices, tf.bfloat16)
+      operations = tf.cast(operations, tf.bfloat16)
     prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
     return prices,operations
 
@@ -142,6 +145,8 @@ class ImageNetTFExampleInput(object):
     prices = items[0:self.priceSquared*self.priceSquared*self.channelInputs]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
+    else:
+      prices = tf.cast(prices, tf.bfloat16)
     prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
     
     # tf.logging.info(f'prices.shape={prices.shape}')
