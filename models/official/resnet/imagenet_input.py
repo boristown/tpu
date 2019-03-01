@@ -120,10 +120,10 @@ class ImageNetTFExampleInput(object):
     items = tf.decode_csv(line, record_defaults)
     prices = items[0:self.priceSquared*self.priceSquared*self.channelInputs]
     operations = items[self.priceSquared*self.priceSquared*self.channelInputs:self.priceSquared*self.priceSquared*self.channelInputs+self.operationOutputs]
-
-    prices = tf.cast(prices, tf.float32)
+    if not self.use_bfloat16:
+      prices = tf.cast(prices, tf.float32)
+      operations = tf.cast(operations, tf.float32)
     prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
-    operations = tf.cast(operations, tf.float32)
     return prices,operations
 
   def dataset_predict_parser(self, line):
@@ -140,8 +140,8 @@ class ImageNetTFExampleInput(object):
     record_defaults = [[1.0] for col in range(self.priceSquared*self.priceSquared*self.channelInputs)]
     items = tf.decode_csv(line, record_defaults)
     prices = items[0:self.priceSquared*self.priceSquared*self.channelInputs]
-    
-    prices = tf.cast(prices, tf.float32)
+    if not self.use_bfloat16:
+      prices = tf.cast(prices, tf.float32)
     prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
     
     # tf.logging.info(f'prices.shape={prices.shape}')
