@@ -422,7 +422,7 @@ def resnet_model_fn(features, labels, mode, params):
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
       #onehot_labels=one_hot_labels,
-      onehot_labels=labels
+      onehot_labels=labels,
       label_smoothing=FLAGS.label_smoothing)
 
   # Add weight decay to the loss for non-batch-normalization variables.
