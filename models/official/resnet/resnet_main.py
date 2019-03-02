@@ -408,9 +408,10 @@ def resnet_model_fn(features, labels, mode, params):
   # size flags (--train_batch_size or --eval_batch_size).
   batch_size = params['batch_size']   # pylint: disable=unused-variable
 
+  labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
   # Calculate loss, which includes softmax cross entropy and L2 regularization.
   #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
-  one_hot_labels = tf.transpose(labels, [1, 0])
+  one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
@@ -535,7 +536,6 @@ def resnet_model_fn(features, labels, mode, params):
       #sess = tf.Session()
       #with sess.as_default():
       #  tf.logging.info("labels.eval()=%s" % (labels.eval()))
-      labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
       predictions = tf.argmax(logits, axis=1)
       labels_top_1 = tf.argmax(labels_reshaped, axis=0)
       #labels_top_1 = tf.argmax(labels_reshaped, axis=1)
