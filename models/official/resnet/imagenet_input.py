@@ -26,7 +26,7 @@ import tensorflow as tf
 # from official.resnet import resnet_preprocessing
 import resnet_preprocessing
 
-IMAGE_SIZE = 3
+IMAGE_SIZE = 4
 CHANNEL_COUNT = 2
 LABEL_COUNT = 16
 
