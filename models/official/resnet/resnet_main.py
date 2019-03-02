@@ -730,6 +730,7 @@ def main(unused_argv):
 
   else:   # FLAGS.mode == 'train' or FLAGS.mode == 'train_and_eval'
     current_step = estimator._load_global_step_from_checkpoint_dir(FLAGS.model_dir)  # pylint: disable=protected-access,line-too-long
+    tf.logging.info('model_dir=%s,steps=%d' % (FLAGS.model_dir,current_step))
     steps_per_epoch = FLAGS.num_train_images // FLAGS.train_batch_size
 
     tf.logging.info('Training for %d steps (%.2f epochs in total). Current'
