@@ -536,8 +536,9 @@ def resnet_model_fn(features, labels, mode, params):
       #sess = tf.Session()
       #with sess.as_default():
       #  tf.logging.info("labels.eval()=%s" % (labels.eval()))
+      labels_reshaped2 = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
       predictions = tf.argmax(logits, axis=1)
-      labels_top_1 = tf.argmax(labels_reshaped, axis=0)
+      labels_top_1 = tf.argmax(labels_reshaped2, axis=0)
       #labels_top_1 = tf.argmax(labels_reshaped, axis=1)
       # top_1_accuracy = tf.metrics.accuracy(labels, predictions)
       top_1_accuracy = tf.metrics.accuracy(labels_top_1, predictions)
