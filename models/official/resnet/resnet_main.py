@@ -347,6 +347,9 @@ def resnet_model_fn(features, labels, mode, params):
     #features = tf.reshape(features, [image_size, image_size, 3, -1])
     features = tf.reshape(features, [image_size, image_size, 2, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
+    labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
+    labels = tf.transpose(labels, [1, 0])  # LN to NL
+    tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
 
   # Normalize the image to zero mean and unit variance.
   #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
@@ -409,16 +412,17 @@ def resnet_model_fn(features, labels, mode, params):
   batch_size = params['batch_size']   # pylint: disable=unused-variable
 
   #labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
-  labels_reshaped = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
+  #labels_reshaped = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
   
   # Calculate loss, which includes softmax cross entropy and L2 regularization.
   #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
-  one_hot_labels = labels_reshaped
+  #one_hot_labels = labels_reshaped
   
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
-      onehot_labels=one_hot_labels,
+      #onehot_labels=one_hot_labels,
+      onehot_labels=labels
       label_smoothing=FLAGS.label_smoothing)
 
   # Add weight decay to the loss for non-batch-normalization variables.
@@ -540,10 +544,11 @@ def resnet_model_fn(features, labels, mode, params):
       #with sess.as_default():
       #  tf.logging.info("labels.eval()=%s" % (labels.eval()))
       #labels_reshaped2 = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
-      labels_reshaped2 = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
+      #labels_reshaped2 = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
       predictions = tf.argmax(logits, axis=1)
       #labels_top_1 = tf.argmax(labels_reshaped2, axis=0)
-      labels_top_1 = tf.argmax(labels_reshaped2, axis=1)
+      #labels_top_1 = tf.argmax(labels_reshaped2, axis=1)
+      labels_top_1 = tf.argmax(labels, axis=1)
       # top_1_accuracy = tf.metrics.accuracy(labels, predictions)
       top_1_accuracy = tf.metrics.accuracy(labels_top_1, predictions)
       
