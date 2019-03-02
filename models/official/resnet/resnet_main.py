@@ -408,10 +408,13 @@ def resnet_model_fn(features, labels, mode, params):
   # size flags (--train_batch_size or --eval_batch_size).
   batch_size = params['batch_size']   # pylint: disable=unused-variable
 
-  labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
+  #labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
+  labels_reshaped = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
+  
   # Calculate loss, which includes softmax cross entropy and L2 regularization.
   #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
-  one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
+  #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
+  one_hot_labels = labels_reshaped
   
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
@@ -536,10 +539,11 @@ def resnet_model_fn(features, labels, mode, params):
       #sess = tf.Session()
       #with sess.as_default():
       #  tf.logging.info("labels.eval()=%s" % (labels.eval()))
-      labels_reshaped2 = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
+      #labels_reshaped2 = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
+      labels_reshaped2 = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
       predictions = tf.argmax(logits, axis=1)
-      labels_top_1 = tf.argmax(labels_reshaped2, axis=0)
-      #labels_top_1 = tf.argmax(labels_reshaped, axis=1)
+      #labels_top_1 = tf.argmax(labels_reshaped2, axis=0)
+      labels_top_1 = tf.argmax(labels_reshaped2, axis=1)
       # top_1_accuracy = tf.metrics.accuracy(labels, predictions)
       top_1_accuracy = tf.metrics.accuracy(labels_top_1, predictions)
       
