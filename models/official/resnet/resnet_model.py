@@ -242,13 +242,13 @@ def residual_block(inputs, filters, is_training, strides,
   if use_projection:
     # Projection shortcut in first layer to match filters and strides
     shortcut = conv2d_fixed_padding(
-        inputs=inputs, filters=filters, kernel_size=1, strides=strides,
+        inputs=inputs, filters=filters, kernel_size=1, strides=1,
         data_format=data_format)
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
                                data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=strides,
+      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
@@ -293,7 +293,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
     # end with 4 times the number of filters.
     filters_out = 4 * filters
     shortcut = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=1, strides=strides,
+        inputs=inputs, filters=filters_out, kernel_size=1, strides=1,
         data_format=data_format)
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
                                data_format=data_format)
@@ -310,7 +310,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=strides,
+      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
   inputs = dropblock(
@@ -403,15 +403,16 @@ def resnet_v1_generator(block_fn, layers, num_classes,
   def model(inputs, is_training):
     """Creation of the model graph."""
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
+    #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
+        inputs=inputs, filters=64, kernel_size=2, strides=1,
         data_format=data_format)
     inputs = tf.identity(inputs, 'initial_conv')
     inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
-    inputs = tf.layers.max_pooling2d(
-        inputs=inputs, pool_size=3, strides=CHANNEL_COUNT, padding='SAME',
-        data_format=data_format)
-    inputs = tf.identity(inputs, 'initial_max_pool')
+    #inputs = tf.layers.max_pooling2d(
+    #    inputs=inputs, pool_size=3, strides=CHANNEL_COUNT, padding='SAME',
+    #    data_format=data_format)
+    #inputs = tf.identity(inputs, 'initial_max_pool')
 
     inputs = block_group(
         inputs=inputs, filters=64, block_fn=block_fn, blocks=layers[0],
@@ -420,17 +421,17 @@ def resnet_v1_generator(block_fn, layers, num_classes,
         dropblock_size=dropblock_size)
     inputs = block_group(
         inputs=inputs, filters=128, block_fn=block_fn, blocks=layers[1],
-        strides=2, is_training=is_training, name='block_group2',
+        strides=1, is_training=is_training, name='block_group2',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
         dropblock_size=dropblock_size)
     inputs = block_group(
         inputs=inputs, filters=256, block_fn=block_fn, blocks=layers[2],
-        strides=2, is_training=is_training, name='block_group3',
+        strides=1, is_training=is_training, name='block_group3',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
         dropblock_size=dropblock_size)
     inputs = block_group(
         inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[3],
-        strides=2, is_training=is_training, name='block_group4',
+        strides=1, is_training=is_training, name='block_group4',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
         dropblock_size=dropblock_size)
 
