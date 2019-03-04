@@ -88,6 +88,7 @@ class ImageNetTFExampleInput(object):
       prices = tf.reshape(prices, [-1])
       operations.set_shape(operations.get_shape().merge_with(
           tf.TensorShape([None, batch_real_size])))
+      operations = tf.reshape(operations, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
           tf.TensorShape([batch_real_size, None, None, None])))
