@@ -248,12 +248,12 @@ def residual_block(inputs, filters, is_training, strides,
                                data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=1,
+      inputs=inputs, filters=filters, kernel_size=IMAGE_SIZE, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=1,
+      inputs=inputs, filters=filters, kernel_size=IMAGE_SIZE, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
                            data_format=data_format)
@@ -310,7 +310,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=CHANNEL_COUNT, strides=1,
+      inputs=inputs, filters=filters, kernel_size=IMAGE_SIZE, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
   inputs = dropblock(
@@ -404,7 +404,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     """Creation of the model graph."""
     inputs = conv2d_fixed_padding(
     #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-        inputs=inputs, filters=64, kernel_size=2, strides=1,
+        inputs=inputs, filters=64, kernel_size=IMAGE_SIZE, strides=1,
         data_format=data_format)
     inputs = tf.identity(inputs, 'initial_conv')
     inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
