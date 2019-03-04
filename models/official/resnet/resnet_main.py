@@ -540,26 +540,17 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-      #sess = tf.Session()
-      #with sess.as_default():
-      #  tf.logging.info("labels.eval()=%s" % (labels.eval()))
-      #labels_reshaped2 = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
-      #labels_reshaped2 = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
       predictions = tf.argmax(logits, axis=1)
-      #labels_top_1 = tf.argmax(labels_reshaped2, axis=0)
-      #labels_top_1 = tf.argmax(labels_reshaped2, axis=1)
-      labels_top_1 = tf.argmax(labels, axis=1)
-      # top_1_accuracy = tf.metrics.accuracy(labels, predictions)
-      top_1_accuracy = tf.metrics.accuracy(labels_top_1, predictions)
       
-      # in_top_5 = tf.cast(tf.nn.in_top_k(logits, labels, 5), tf.float32)
-      in_top_2 = tf.cast(tf.nn.in_top_k(logits, labels_top_1, 2), tf.float32)
-      top_2_accuracy = tf.metrics.mean(in_top_2)
+      in_top_4 = tf.cast(tf.nn.in_top_k(labels, predictions, 4), tf.float32)
+      top_4_accuracy = tf.metrics.mean(in_top_4)
+        
+      in_top_8 = tf.cast(tf.nn.in_top_k(labels, predictions, 8), tf.float32)
+      top_8_accuracy = tf.metrics.mean(in_top_8)
 
       return {
-          'top_1_accuracy': top_1_accuracy,
-          # 'top_5_accuracy': top_5_accuracy,
-          'top_2_accuracy': top_2_accuracy,
+          'top_4_accuracy': top_4_accuracy,
+          'top_8_accuracy': top_8_accuracy,
       }
 
     eval_metrics = (metric_fn, [labels, logits])
