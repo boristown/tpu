@@ -540,12 +540,12 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-      predictions = tf.cast(tf.argmax(logits, axis=1), tf.float32)
+      predictions = tf.argmax(logits, axis=1)
       
-      in_top_4 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), tf.cast(predictions,tf.float32), 4), tf.float32)
+      in_top_4 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 4), tf.float32)
       top_4_accuracy = tf.metrics.mean(in_top_4)
         
-      in_top_8 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), tf.cast(predictions,tf.float32), 8), tf.float32)
+      in_top_8 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 8), tf.float32)
       top_8_accuracy = tf.metrics.mean(in_top_8)
 
       return {
