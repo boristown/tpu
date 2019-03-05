@@ -351,7 +351,7 @@ def resnet_model_fn(features, labels, mode, params):
     if mode != tf.estimator.ModeKeys.PREDICT:
       labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
       labels = tf.transpose(labels, [1, 0])  # LN to NL
-    tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
+      tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
 
   # Normalize the image to zero mean and unit variance.
   #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
