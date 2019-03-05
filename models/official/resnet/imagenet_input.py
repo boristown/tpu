@@ -100,13 +100,13 @@ class ImageNetTFExampleInput(object):
   def set_predict_shapes(self, batch_size, prices):
     # tf.logging.info(f'prices.shape2={prices.shape} self.transpose_input={self.transpose_input}')
     """Statically set the batch_size dimension."""
-    #if self.transpose_input:
-      #prices.set_shape(prices.get_shape().merge_with(
-      #    tf.TensorShape([None, None, None, batch_size])))
-      #prices = tf.reshape(prices, [-1])
-    #else:
-      #prices.set_shape(prices.get_shape().merge_with(
-      #    tf.TensorShape([batch_size, None, None, None])))
+    if self.transpose_input:
+      prices.set_shape(prices.get_shape().merge_with(
+          tf.TensorShape([None, None, None, batch_size])))
+      prices = tf.reshape(prices, [-1])
+    else:
+      prices.set_shape(prices.get_shape().merge_with(
+          tf.TensorShape([batch_size, None, None, None])))
     # tf.logging.info(f'prices.shape3={prices.shape}')
     return prices
   
@@ -136,7 +136,6 @@ class ImageNetTFExampleInput(object):
 
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
-
     Args:
       value: serialized string containing an ImageNet TFExample.
 
@@ -276,10 +275,10 @@ class ImageNetTFExampleInput(object):
             num_parallel_batches=self.num_parallel_calls, drop_remainder=True))
 
     # Transpose for performance on TPU
-    # if self.transpose_input:
-    #  predict_dataset = predict_dataset.map(
-    #      lambda prices: tf.transpose(prices, [1, 2, 3, 0]),
-    #      num_parallel_calls=self.num_parallel_calls)
+    if self.transpose_input:
+      predict_dataset = predict_dataset.map(
+         lambda prices: tf.transpose(prices, [1, 2, 3, 0]),
+         num_parallel_calls=self.num_parallel_calls)
 
     # Assign static batch size dimension
     predict_dataset = predict_dataset.map(functools.partial(self.set_predict_shapes, batch_size))
