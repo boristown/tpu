@@ -170,7 +170,7 @@ class ImageNetTFExampleInput(object):
       num_hosts: total number of hosts.
 
     Returns:
-      A `tf.data.Dataset` object.
+      A `tf.data.Dataset` object. 
     """
     return
 
