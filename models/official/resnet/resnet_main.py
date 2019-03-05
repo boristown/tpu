@@ -341,14 +341,16 @@ def resnet_model_fn(features, labels, mode, params):
     assert not FLAGS.transpose_input    # channels_first only for GPU
     features = tf.transpose(features, [0, 3, 1, 2])
 
-  if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
+  #if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
+  if FLAGS.transpose_input:
     #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
     image_size = FLAGS.image_size
     #features = tf.reshape(features, [image_size, image_size, 3, -1])
     features = tf.reshape(features, [image_size, image_size, 2, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
-    labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
-    labels = tf.transpose(labels, [1, 0])  # LN to NL
+    if mode != tf.estimator.ModeKeys.PREDICT:
+      labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
+      labels = tf.transpose(labels, [1, 0])  # LN to NL
     tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
 
   # Normalize the image to zero mean and unit variance.
