@@ -443,7 +443,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
         data_format=data_format)
     inputs = tf.identity(inputs, 'final_avg_pool')
     inputs = tf.reshape(
-        inputs, [-1, 2048 if block_fn is bottleneck_block else 512])
+        inputs, [-1, 2048*8 if block_fn is bottleneck_block else 512*8])
     inputs = tf.layers.dense(
         inputs=inputs,
         units=num_classes,
