@@ -396,7 +396,7 @@ def resnet_model_fn(features, labels, mode, params):
     logits = tf.cast(logits, tf.float32)
   elif FLAGS.precision == 'float32':
     logits = build_network()
-  tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
+  # tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
         'classes': tf.argmax(logits, axis=1),
@@ -541,7 +541,7 @@ def resnet_model_fn(features, labels, mode, params):
       Returns:
         A dict of the metrics to return from evaluation.
       """
-      tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
+      # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
       predictions = tf.argmax(logits, axis=1)
       
       in_top_4 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 4), tf.float32)
