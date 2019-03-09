@@ -415,22 +415,22 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     #inputs = tf.identity(inputs, 'initial_max_pool')
 
     inputs = block_group(
-        inputs=inputs, filters=4096, block_fn=block_fn, blocks=layers[0],
+        inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[0],
         strides=1, is_training=is_training, name='block_group1',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
         dropblock_size=dropblock_size)
     inputs = block_group(
-        inputs=inputs, filters=4096, block_fn=block_fn, blocks=layers[1],
+        inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[1],
         strides=1, is_training=is_training, name='block_group2',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
         dropblock_size=dropblock_size)
     inputs = block_group(
-        inputs=inputs, filters=4096, block_fn=block_fn, blocks=layers[2],
+        inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[2],
         strides=1, is_training=is_training, name='block_group3',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
         dropblock_size=dropblock_size)
     inputs = block_group(
-        inputs=inputs, filters=4096, block_fn=block_fn, blocks=layers[3],
+        inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[3],
         strides=1, is_training=is_training, name='block_group4',
         data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
         dropblock_size=dropblock_size)
@@ -443,7 +443,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
         data_format=data_format)
     inputs = tf.identity(inputs, 'final_avg_pool')
     inputs = tf.reshape(
-        inputs, [-1, 2048*8 if block_fn is bottleneck_block else 512*8])
+        inputs, [-1, 2048 if block_fn is bottleneck_block else 512])
     inputs = tf.layers.dense(
         inputs=inputs,
         units=num_classes,
