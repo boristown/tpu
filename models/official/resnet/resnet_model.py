@@ -404,7 +404,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     """Creation of the model graph."""
     inputs = conv2d_fixed_padding(
     #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-        inputs=inputs, filters=4096, kernel_size=IMAGE_SIZE, strides=2,
+        inputs=inputs, filters=512, kernel_size=IMAGE_SIZE, strides=2,
         data_format=data_format)
     inputs = tf.identity(inputs, 'initial_conv')
     inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
