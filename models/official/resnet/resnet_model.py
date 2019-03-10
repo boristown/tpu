@@ -30,7 +30,7 @@ BATCH_NORM_EPSILON = 1e-5
 IMAGE_SIZE = 4
 CHANNEL_COUNT = 2
 LABEL_COUNT = 16
-FILTER_COUNT=1024
+FILTER_COUNT=512
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
                     data_format='channels_first'):
