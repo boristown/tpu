@@ -363,13 +363,16 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
     The output `Tensor` of the block layer.
   """
   # Only the first block per block_group uses projection shortcut and strides.
+  '''
   inputs = block_fn(inputs, filters, is_training, strides,
                     use_projection=True, data_format=data_format,
                     dropblock_keep_prob=dropblock_keep_prob,
                     dropblock_size=dropblock_size)
-  tf.logging.info("inputs.shape=%s" % (inputs.shape))
+  '''
+  #tf.logging.info("inputs.shape=%s" % (inputs.shape))
     
-  for _ in range(1, blocks):
+  #for _ in range(1, blocks):
+  for _ in range(0, blocks):
     inputs = block_fn(inputs, filters, is_training, 1,
                       data_format=data_format,
                       dropblock_keep_prob=dropblock_keep_prob,
