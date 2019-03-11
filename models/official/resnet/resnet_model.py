@@ -415,14 +415,14 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     """Creation of the model graph."""
     LAYERS_SUM = sum(layers)
     if USE_DENSENET:
-      tf.logging.info("input.shape=%s" % (input.shape))
+      tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = conv2d_fixed_padding(
           inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=1,
           data_format=data_format)
-      tf.logging.info("input.shape=%s" % (input.shape))
+      tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
-      tf.logging.info("input.shape=%s" % (input.shape))
+      tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=LAYERS_SUM,
           strides=1, is_training=is_training, name='block_groups',
