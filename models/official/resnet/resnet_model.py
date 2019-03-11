@@ -31,6 +31,7 @@ IMAGE_SIZE = 4
 CHANNEL_COUNT = 2
 LABEL_COUNT = 16
 FILTER_COUNT= 512
+GROWTH_RATE = 64
 USE_DENSENET = True
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
@@ -259,8 +260,10 @@ def residual_block(inputs, filters, is_training, strides,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
                            data_format=data_format)
-
-  return tf.nn.relu(inputs + shortcut)
+  if USE_DENSENET:
+    return tf.concat([inputs, shortcut], axis=3)
+  else:
+    return tf.nn.relu(inputs + shortcut)
 
 
 def bottleneck_block(inputs, filters, is_training, strides,
@@ -327,8 +330,11 @@ def bottleneck_block(inputs, filters, is_training, strides,
   inputs = dropblock(
       inputs, is_training=is_training, data_format=data_format,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
-
-  return tf.nn.relu(inputs + shortcut)
+    
+  if USE_DENSENET:
+    return tf.concat([inputs, shortcut], axis=3)
+  else:
+    return tf.nn.relu(inputs + shortcut)
 
 
 def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
@@ -404,38 +410,47 @@ def resnet_v1_generator(block_fn, layers, num_classes,
 
   def model(inputs, is_training):
     """Creation of the model graph."""
-    inputs = conv2d_fixed_padding(
-    #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-        inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
-        data_format=data_format)
-    inputs = tf.identity(inputs, 'initial_conv')
-    inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
-
-    #inputs = tf.layers.max_pooling2d(
-    #    inputs=inputs, pool_size=3, strides=CHANNEL_COUNT, padding='SAME',
-    #    data_format=data_format)
-    #inputs = tf.identity(inputs, 'initial_max_pool')
-
-    inputs = block_group(
-        inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[0],
-        strides=1, is_training=is_training, name='block_group1',
-        data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
-        dropblock_size=dropblock_size)
-    inputs = block_group(
-        inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[1],
-        strides=1, is_training=is_training, name='block_group2',
-        data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
-        dropblock_size=dropblock_size)
-    inputs = block_group(
-        inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[2],
-        strides=1, is_training=is_training, name='block_group3',
-        data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
-        dropblock_size=dropblock_size)
-    inputs = block_group(
-        inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[3],
-        strides=1, is_training=is_training, name='block_group4',
-        data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
-        dropblock_size=dropblock_size)
+    LAYERS_SUM = sum(layers)
+    if USE_DENSENET:
+      inputs = conv2d_fixed_padding(
+          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
+          data_format=data_format)
+      inputs = tf.identity(inputs, 'initial_conv')
+      inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
+      inputs = block_group(
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=LAYERS_SUM,
+          strides=1, is_training=is_training, name='block_groups',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
+          dropblock_size=dropblock_size)
+        
+    else:
+      inputs = conv2d_fixed_padding(
+      #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
+          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
+          data_format=data_format)
+      inputs = tf.identity(inputs, 'initial_conv')
+      inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
+    
+      inputs = block_group(
+          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[0],
+          strides=1, is_training=is_training, name='block_group1',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
+          dropblock_size=dropblock_size)
+      inputs = block_group(
+          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[1],
+          strides=1, is_training=is_training, name='block_group2',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
+          dropblock_size=dropblock_size)
+      inputs = block_group(
+          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[2],
+          strides=1, is_training=is_training, name='block_group3',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
+          dropblock_size=dropblock_size)
+      inputs = block_group(
+          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[3],
+          strides=1, is_training=is_training, name='block_group4',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
+          dropblock_size=dropblock_size)
 
     # The activation is 7x7 so this is a global average pool.
     # TODO(huangyp): reduce_mean will be faster.
@@ -444,8 +459,13 @@ def resnet_v1_generator(block_fn, layers, num_classes,
         inputs=inputs, pool_size=pool_size, strides=1, padding='VALID',
         data_format=data_format)
     inputs = tf.identity(inputs, 'final_avg_pool')
-    inputs = tf.reshape(
-        inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
+    if USE_DENSENET:
+      inputs = tf.reshape(
+          inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
+    else:
+      inputs = tf.reshape(
+          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
+      
     inputs = tf.layers.dense(
         inputs=inputs,
         units=num_classes,
