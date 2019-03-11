@@ -31,6 +31,7 @@ IMAGE_SIZE = 4
 CHANNEL_COUNT = 2
 LABEL_COUNT = 16
 FILTER_COUNT= 512
+USE_DENSENET = True
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
                     data_format='channels_first'):
