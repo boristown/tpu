@@ -410,7 +410,8 @@ def resnet_v1_generator(block_fn, layers, num_classes,
 
   def model(inputs, is_training):
     """Creation of the model graph."""
-    LAYERS_SUM = sum(layers)
+    # LAYERS_SUM = sum(layers)
+    LAYERS_SUM = 8
     if USE_DENSENET:
       inputs = conv2d_fixed_padding(
           inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
@@ -459,7 +460,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
         inputs=inputs, pool_size=pool_size, strides=1, padding='VALID',
         data_format=data_format)
     inputs = tf.identity(inputs, 'final_avg_pool')
-    if USE_DENSENET:
+    if not USE_DENSENET:
       inputs = tf.reshape(
           inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
     else:
