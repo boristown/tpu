@@ -366,12 +366,14 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
                     use_projection=True, data_format=data_format,
                     dropblock_keep_prob=dropblock_keep_prob,
                     dropblock_size=dropblock_size)
-
+  tf.logging.info("inputs.shape=%s" % (inputs.shape))
+    
   for _ in range(1, blocks):
     inputs = block_fn(inputs, filters, is_training, 1,
                       data_format=data_format,
                       dropblock_keep_prob=dropblock_keep_prob,
                       dropblock_size=dropblock_size)
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
 
   return tf.identity(inputs, name)
 
@@ -410,8 +412,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
 
   def model(inputs, is_training):
     """Creation of the model graph."""
-    # LAYERS_SUM = sum(layers)
-    LAYERS_SUM = 8
+    LAYERS_SUM = sum(layers)
     if USE_DENSENET:
       inputs = conv2d_fixed_padding(
           inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
