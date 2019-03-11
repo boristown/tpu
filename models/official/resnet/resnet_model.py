@@ -32,7 +32,7 @@ CHANNEL_COUNT = 2
 LABEL_COUNT = 16
 FILTER_COUNT= 512
 GROWTH_RATE = 64
-USE_DENSENET = True
+USE_DENSENET = False
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
                     data_format='channels_first'):
@@ -435,7 +435,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     else:
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
+          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=1,
           data_format=data_format)
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
