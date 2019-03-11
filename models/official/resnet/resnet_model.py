@@ -209,7 +209,8 @@ def conv2d_fixed_padding(inputs, filters, kernel_size, strides,
   return tf.layers.conv2d(
       #inputs=inputs.astype(np.float32), filters=filters.astype(np.float32), kernel_size=kernel_size, strides=strides,
       inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
-      padding=('SAME' if strides == 1 else 'VALID'), use_bias=False,
+      #padding=('SAME' if strides == 1 else 'VALID'), use_bias=False,
+      padding='VALID', use_bias=False,
       kernel_initializer=tf.variance_scaling_initializer(),
       data_format=data_format)
 
@@ -415,7 +416,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     LAYERS_SUM = sum(layers)
     if USE_DENSENET:
       inputs = conv2d_fixed_padding(
-          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=2,
+          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=1,
           data_format=data_format)
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
