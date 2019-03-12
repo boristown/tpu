@@ -793,6 +793,8 @@ def main(unused_argv):
         with open(price_files[0],"r") as fcsv:
           csvreader = csv.reader(fcsv,delimiter = ",")
           price_batch_size = len(list(csvreader))
+        if price_batch_size == 0:
+          continue
         predictions = resnet_classifier.predict(
           input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
           )
