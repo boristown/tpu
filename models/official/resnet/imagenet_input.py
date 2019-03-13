@@ -27,7 +27,7 @@ import tensorflow as tf
 import resnet_preprocessing
 
 IMAGE_SIZE = 4
-CHANNEL_COUNT = 2
+CHANNEL_COUNT = 5
 LABEL_COUNT = 16
 
 def image_serving_input_fn():
