@@ -739,7 +739,7 @@ def main(unused_argv):
             predict_dir=FLAGS.predict_dir,
             transpose_input=FLAGS.transpose_input,
             cache=FLAGS.use_cache and is_training,
-            image_size=FLAGS.image_size,
+            price_count=PRICE_COUNT,
             num_parallel_calls=FLAGS.num_parallel_calls,
             use_bfloat16=use_bfloat16) for is_training in [True, False]
     ]
