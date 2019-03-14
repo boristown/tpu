@@ -247,13 +247,13 @@ def residual_block(inputs, filters, is_training, strides,
   if use_projection:
     # Projection shortcut in first layer to match filters and strides
     shortcut = conv2d_fixed_padding(
-        inputs=inputs, filters=filters, kernel_size=1, strides=1,
+        inputs=inputs, filters=filters, kernel_size=[3,1], strides=1,
         data_format=data_format)
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
                                data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=[2,1], strides=1,
+      inputs=inputs, filters=filters, kernel_size=1, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
@@ -300,7 +300,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
     # end with 4 times the number of filters.
     filters_out = 4 * filters
     shortcut = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=1, strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=[3,1], strides=1,
         data_format=data_format)
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
                                data_format=data_format)
@@ -317,7 +317,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=[2,1], strides=1,
+      inputs=inputs, filters=filters, kernel_size=1, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
   inputs = dropblock(
