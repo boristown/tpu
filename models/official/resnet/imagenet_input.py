@@ -29,7 +29,7 @@ import tensorflow as tf
 PRICE_COUNT = 16
 DIMENSION_COUNT = 5
 CHANNEL_COUNT = 1
-LABEL_COUNT = 16
+LABEL_COUNT = 2
 
 def image_serving_input_fn():
   """Serving input fn for raw images."""
