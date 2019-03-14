@@ -474,7 +474,7 @@ def resnet_model_fn(features, labels, mode, params):
       train_op = optimizer.minimize(loss, global_step)
 
     if not FLAGS.skip_host_call:
-      def host_call_fn(gs, loss, lr, ce):
+      def host_call_fn(gs, loss, ce):
         """Training host call. Creates scalar summaries for training metrics.
 
         This function is executed on the CPU and should not directly reference
@@ -504,7 +504,7 @@ def resnet_model_fn(features, labels, mode, params):
             FLAGS.model_dir, max_queue=FLAGS.iterations_per_loop).as_default():
           with summary.always_record_summaries():
             summary.scalar('loss', loss[0], step=gs)
-            summary.scalar('learning_rate', lr[0], step=gs)
+            #summary.scalar('learning_rate', lr[0], step=gs)
             summary.scalar('current_epoch', ce[0], step=gs)
 
             return summary.all_summary_ops()
@@ -514,13 +514,13 @@ def resnet_model_fn(features, labels, mode, params):
       # expects [batch_size, ...] Tensors, thus reshape to introduce a batch
       # dimension. These Tensors are implicitly concatenated to
       # [params['batch_size']].
-      learning_rate = 0.0
+      #learning_rate = 0.0
       gs_t = tf.reshape(global_step, [1])
       loss_t = tf.reshape(loss, [1])
-      lr_t = tf.reshape(learning_rate, [1])
+      #lr_t = tf.reshape(learning_rate, [1])
       ce_t = tf.reshape(current_epoch, [1])
 
-      host_call = (host_call_fn, [gs_t, loss_t, lr_t, ce_t])
+      host_call = (host_call_fn, [gs_t, loss_t, ce_t])
 
   else:
     train_op = None
@@ -549,15 +549,67 @@ def resnet_model_fn(features, labels, mode, params):
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
       predictions = tf.argmax(logits, axis=1)
       
+      in_top_1 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
+      top_1_accuracy = tf.metrics.mean(in_top_1)
+      
+      in_top_2 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 2), tf.float32)
+      top_2_accuracy = tf.metrics.mean(in_top_2)
+      
+      in_top_3 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 3), tf.float32)
+      top_3_accuracy = tf.metrics.mean(in_top_3)
+      
       in_top_4 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 4), tf.float32)
       top_4_accuracy = tf.metrics.mean(in_top_4)
-        
+      
+      in_top_5 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 5), tf.float32)
+      top_5_accuracy = tf.metrics.mean(in_top_5)
+      
+      in_top_6 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 6), tf.float32)
+      top_6_accuracy = tf.metrics.mean(in_top_6)
+      
+      in_top_7 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 7), tf.float32)
+      top_7_accuracy = tf.metrics.mean(in_top_7)
+      
       in_top_8 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 8), tf.float32)
       top_8_accuracy = tf.metrics.mean(in_top_8)
-
+      
+      in_top_9 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 9), tf.float32)
+      top_9_accuracy = tf.metrics.mean(in_top_9)
+      
+      in_top_10 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 10), tf.float32)
+      top_10_accuracy = tf.metrics.mean(in_top_10)
+      
+      in_top_11 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 11), tf.float32)
+      top_11_accuracy = tf.metrics.mean(in_top_11)
+        
+      in_top_12 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 12), tf.float32)
+      top_12_accuracy = tf.metrics.mean(in_top_12)
+        
+      in_top_13 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 13), tf.float32)
+      top_13_accuracy = tf.metrics.mean(in_top_13)
+        
+      in_top_14 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 14), tf.float32)
+      top_14_accuracy = tf.metrics.mean(in_top_14)
+        
+      in_top_15 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 15), tf.float32)
+      top_15_accuracy = tf.metrics.mean(in_top_15)
+      
       return {
+          'top_1_accuracy': top_1_accuracy,
+          'top_2_accuracy': top_2_accuracy,
+          'top_3_accuracy': top_3_accuracy,
           'top_4_accuracy': top_4_accuracy,
+          'top_5_accuracy': top_5_accuracy,
+          'top_6_accuracy': top_6_accuracy,
+          'top_7_accuracy': top_7_accuracy,
           'top_8_accuracy': top_8_accuracy,
+          'top_9_accuracy': top_9_accuracy,
+          'top_10_accuracy': top_10_accuracy,
+          'top_11_accuracy': top_11_accuracy,
+          'top_12_accuracy': top_12_accuracy,
+          'top_13_accuracy': top_13_accuracy,
+          'top_14_accuracy': top_14_accuracy,
+          'top_15_accuracy': top_15_accuracy,
       }
 
     eval_metrics = (metric_fn, [labels, logits])
