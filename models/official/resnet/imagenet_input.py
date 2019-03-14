@@ -69,7 +69,7 @@ class ImageNetTFExampleInput(object):
                transpose_input=False,
                num_parallel_calls=8):
     #raise Exception(f'ImageNetTFExampleInput init')
-    self.image_preprocessing_fn = resnet_preprocessing.preprocess_image
+    #self.image_preprocessing_fn = resnet_preprocessing.preprocess_image
     self.is_training = is_training
     self.use_bfloat16 = use_bfloat16
     self.transpose_input = transpose_input
