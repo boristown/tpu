@@ -364,7 +364,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   # DropBlock keep_prob for the 4 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
-  dropblock_keep_probs = [None] * 4
+  dropblock_keep_probs = [None] * 7
   if FLAGS.dropblock_groups:
     # Scheduled keep_prob for DropBlock.
     train_steps = tf.cast(FLAGS.train_steps, tf.float32)
