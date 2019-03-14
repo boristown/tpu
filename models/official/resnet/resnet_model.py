@@ -483,7 +483,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_dense')
     return inputs
 
-  model.default_image_size = IMAGE_SIZE
+  model.default_image_size = PRICE_COUNT
   return model
 
 
