@@ -26,8 +26,9 @@ import tensorflow as tf
 # from official.resnet import resnet_preprocessing
 import resnet_preprocessing
 
-IMAGE_SIZE = 4
-CHANNEL_COUNT = 5
+PRICE_COUNT = 16
+DIMENSION_COUNT = 5
+CHANNEL_COUNT = 1
 LABEL_COUNT = 16
 
 def image_serving_input_fn():
@@ -63,7 +64,7 @@ class ImageNetTFExampleInput(object):
   def __init__(self,
                is_training,
                use_bfloat16,
-               image_size=IMAGE_SIZE,
+               price_count=PRICE_COUNT,
                transpose_input=False,
                num_parallel_calls=8):
     #raise Exception(f'ImageNetTFExampleInput init')
@@ -71,9 +72,8 @@ class ImageNetTFExampleInput(object):
     self.is_training = is_training
     self.use_bfloat16 = use_bfloat16
     self.transpose_input = transpose_input
-    self.image_size = image_size
+    self.prices_count = PRICE_COUNT
     self.num_parallel_calls = num_parallel_calls
-    self.priceSquared = IMAGE_SIZE
     self.channelInputs = CHANNEL_COUNT
     self.operationOutputs = LABEL_COUNT
 
@@ -120,17 +120,18 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(self.priceSquared*self.priceSquared*self.channelInputs+self.operationOutputs)]
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT)]
     items = tf.decode_csv(line, record_defaults)
-    prices = items[0:self.priceSquared*self.priceSquared*self.channelInputs]
-    operations = items[self.priceSquared*self.priceSquared*self.channelInputs:self.priceSquared*self.priceSquared*self.channelInputs+self.operationOutputs]
+    prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
+    prices = [0 if x==0.5 else x for x in prices]
+    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       operations = tf.cast(operations, tf.float32)
     else:
       prices = tf.cast(prices, tf.bfloat16)
       operations = tf.cast(operations, tf.bfloat16)
-    prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
+    prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices,operations
 
@@ -144,14 +145,15 @@ class ImageNetTFExampleInput(object):
     """
     # tf.logging.info(f'line={line}')
     # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(self.priceSquared*self.priceSquared*self.channelInputs)]
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT)]
     items = tf.decode_csv(line, record_defaults)
-    prices = items[0:self.priceSquared*self.priceSquared*self.channelInputs]
+    prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
+    prices = [0 if x==0.5 else x for x in prices]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
     else:
       prices = tf.cast(prices, tf.bfloat16)
-    prices = tf.reshape(prices,[self.priceSquared,self.priceSquared,self.channelInputs])
+    prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
     
     # tf.logging.info(f'prices.shape={prices.shape}')
     return prices
@@ -313,7 +315,7 @@ class ImageNetInput(ImageNetTFExampleInput):
                data_dir,
                prices_dir,
                predict_dir,
-               image_size=IMAGE_SIZE,
+               price_count=PRICE_COUNT,
                num_parallel_calls=8,
                cache=False):
     """Create an input from TFRecord files.
@@ -332,7 +334,7 @@ class ImageNetInput(ImageNetTFExampleInput):
     """
     super(ImageNetInput, self).__init__(
         is_training=is_training,
-        image_size=image_size,
+        price_count=price_count,
         use_bfloat16=use_bfloat16,
         transpose_input=transpose_input)
     self.data_dir = data_dir
@@ -355,7 +357,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       a tensor representing a null image.
     """
     del data  # Unused since output is constant regardless of input
-    return tf.zeros([self.image_size, self.image_size, CHANNEL_COUNT], tf.bfloat16
+    return tf.zeros([PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], tf.bfloat16
                     if self.use_bfloat16 else tf.float32)
 
   def dataset_parser(self, value):
@@ -394,7 +396,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     def fetch_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
-      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
+      buffer_size = 16 * 1024 * 1024  # 16 MiB per file
       #dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
       dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       return dataset
@@ -431,7 +433,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     def fetch_predict_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
-      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
+      buffer_size = 16 * 1024 * 1024  # 8 MiB per file
       predict_dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       return predict_dataset
 
