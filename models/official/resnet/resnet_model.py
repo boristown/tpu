@@ -31,7 +31,7 @@ PRICE_COUNT = 16
 DIMENSION_COUNT = 5
 CHANNEL_COUNT = 1
 LABEL_COUNT = 16
-FILTER_COUNT= 4096
+FILTER_COUNT= 2048
 GROWTH_RATE = 64
 USE_DENSENET = False
 
@@ -412,9 +412,9 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if dropblock_keep_probs is not 'None' or a list with len 4.
   """
   if dropblock_keep_probs is None:
-    dropblock_keep_probs = [None] * 4
+    dropblock_keep_probs = [None] * 7
   if not isinstance(dropblock_keep_probs,
-                    list) or len(dropblock_keep_probs) != 4:
+                    list) or len(dropblock_keep_probs) != 7:
     raise ValueError('dropblock_keep_probs is not valid:', dropblock_keep_probs)
 
   def model(inputs, is_training):
@@ -438,7 +438,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     else:
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-          inputs=inputs, filters=int(FILTER_COUNT/16), kernel_size=DIMENSION_COUNT, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT/8), kernel_size=DIMENSION_COUNT, strides=1,
           data_format=data_format)
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
@@ -454,16 +454,34 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[2],
+          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[3],
+          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
 
+      inputs = block_group(
+          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[4],
+          strides=1, is_training=is_training, name='block_group5',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[4],
+          dropblock_size=dropblock_size)
+    
+      inputs = block_group(
+          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[5],
+          strides=1, is_training=is_training, name='block_group6',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[5],
+          dropblock_size=dropblock_size)
+        
+      inputs = block_group(
+          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[6],
+          strides=1, is_training=is_training, name='block_group7',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[6],
+          dropblock_size=dropblock_size)
+    
     # The activation is 7x7 so this is a global average pool.
     # TODO(huangyp): reduce_mean will be faster.
     pool_size = (inputs.shape[1], inputs.shape[2])
@@ -494,8 +512,8 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
   """Returns the ResNet model for a given size and number of output classes."""
   model_params = {
       18: {'block': residual_block, 'layers': [2, 2, 2, 2]},
-      34: {'block': residual_block, 'layers': [3, 4, 6, 3]},
-      50: {'block': bottleneck_block, 'layers': [3, 4, 6, 3]},
+      34: {'block': residual_block, 'layers': [2, 2, 3, 3, 2, 2, 2]},
+      50: {'block': bottleneck_block, 'layers': [2, 2, 3, 3, 2, 2, 2]},
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
       200: {'block': bottleneck_block, 'layers': [3, 24, 36, 3]}
