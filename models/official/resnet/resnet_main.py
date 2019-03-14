@@ -50,7 +50,7 @@ FLAGS = flags.FLAGS
 PRICE_COUNT = 16
 DIMENSION_COUNT = 5
 CHANNEL_COUNT = 1
-LABEL_COUNT = 16
+LABEL_COUNT = 2
 
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
