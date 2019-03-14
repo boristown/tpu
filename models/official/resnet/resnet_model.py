@@ -27,10 +27,11 @@ import tensorflow as tf
 
 BATCH_NORM_DECAY = 0.9
 BATCH_NORM_EPSILON = 1e-5
-IMAGE_SIZE = 4
-CHANNEL_COUNT = 5
+PRICE_COUNT = 16
+DIMENSION_COUNT = 5
+CHANNEL_COUNT = 1
 LABEL_COUNT = 16
-FILTER_COUNT= 1024
+FILTER_COUNT= 4096
 GROWTH_RATE = 64
 USE_DENSENET = False
 
@@ -252,7 +253,7 @@ def residual_block(inputs, filters, is_training, strides,
                                data_format=data_format)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=1, strides=1,
+      inputs=inputs, filters=filters, kernel_size=2, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
@@ -316,7 +317,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=1, strides=1,
+      inputs=inputs, filters=filters, kernel_size=2, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
   inputs = dropblock(
@@ -369,7 +370,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
                     dropblock_keep_prob=dropblock_keep_prob,
                     dropblock_size=dropblock_size)
   
-  #tf.logging.info("inputs.shape=%s" % (inputs.shape))
+  tf.logging.info("inputs.shape=%s" % (inputs.shape))
     
   for _ in range(1, blocks):
   #for _ in range(0, blocks):
@@ -377,7 +378,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
                       data_format=data_format,
                       dropblock_keep_prob=dropblock_keep_prob,
                       dropblock_size=dropblock_size)
-    #tf.logging.info("inputs.shape=%s" % (inputs.shape))
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
 
   return tf.identity(inputs, name)
 
@@ -420,7 +421,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if USE_DENSENET:
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = conv2d_fixed_padding(
-          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT/16), kernel_size=DIMENSION_COUNT, strides=1,
           data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
@@ -435,28 +436,28 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     else:
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-          inputs=inputs, filters=FILTER_COUNT, kernel_size=IMAGE_SIZE, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT/16), kernel_size=DIMENSION_COUNT, strides=1,
           data_format=data_format)
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
-    
+      
       inputs = block_group(
-          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[0],
+          inputs=inputs, filters=int(FILTER_COUNT/8), block_fn=block_fn, blocks=layers[0],
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[1],
+          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[2],
+          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=FILTER_COUNT, block_fn=block_fn, blocks=layers[3],
+          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
