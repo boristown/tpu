@@ -46,7 +46,12 @@ from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.estimator import estimator
 
 FLAGS = flags.FLAGS
-CHANNEL_COUNT = 5
+
+PRICE_COUNT = 16
+DIMENSION_COUNT = 5
+CHANNEL_COUNT = 1
+LABEL_COUNT = 16
+
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
@@ -346,7 +351,7 @@ def resnet_model_fn(features, labels, mode, params):
     #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
     image_size = FLAGS.image_size
     #features = tf.reshape(features, [image_size, image_size, 3, -1])
-    features = tf.reshape(features, [image_size, image_size, CHANNEL_COUNT, -1])
+    features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
     if mode != tf.estimator.ModeKeys.PREDICT:
       labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
