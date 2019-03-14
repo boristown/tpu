@@ -24,7 +24,7 @@ import functools
 import os
 import tensorflow as tf
 # from official.resnet import resnet_preprocessing
-import resnet_preprocessing
+#import resnet_preprocessing
 
 PRICE_COUNT = 16
 DIMENSION_COUNT = 5
@@ -36,9 +36,10 @@ def image_serving_input_fn():
 
   def _preprocess_image(image_bytes):
     """Preprocess a single raw image."""
-    image = resnet_preprocessing.preprocess_image(
-        image_bytes=image_bytes, is_training=False)
-    return image
+    #image = resnet_preprocessing.preprocess_image(
+    #    image_bytes=image_bytes, is_training=False)
+    #return image
+    return null
 
   image_bytes_list = tf.placeholder(
       shape=[None],
