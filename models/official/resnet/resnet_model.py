@@ -247,7 +247,7 @@ def residual_block(inputs, filters, is_training, strides,
   if use_projection:
     # Projection shortcut in first layer to match filters and strides
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters, kernel_size=[3 if inputs.shape[1]>=3 else inputs.shape[1],3 if inputs.shape[2]>=3 else inputs.shape[2]], strides=1,
+        inputs=inputs, filters=filters, kernel_size=[2 if inputs.shape[1]>=2 else inputs.shape[1],2 if inputs.shape[2]>=2 else inputs.shape[2]], strides=1,
         data_format=data_format)
     shortcut = inputs
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
@@ -301,7 +301,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
     # end with 4 times the number of filters.
     filters_out = 4 * filters
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=[3 if inputs.shape[1]>=3 else inputs.shape[1],3 if inputs.shape[2]>=3 else inputs.shape[2]], strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=[2 if inputs.shape[1]>=2 else inputs.shape[1],2 if inputs.shape[2]>=2 else inputs.shape[2]], strides=1,
         data_format=data_format)
     shortcut = inputs
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
@@ -438,18 +438,18 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     else:
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-          inputs=inputs, filters=int(FILTER_COUNT/32), kernel_size=3, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT/128), kernel_size=3, strides=1,
           data_format=data_format)
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
       
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[0],
+          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[0],
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[1],
+          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
