@@ -26,10 +26,11 @@ import tensorflow as tf
 # from official.resnet import resnet_preprocessing
 #import resnet_preprocessing
 
-PRICE_COUNT = 16
-DIMENSION_COUNT = 5
-CHANNEL_COUNT = 1
+PRICE_COUNT = 10
+DIMENSION_COUNT = 10
+CHANNEL_COUNT = 2
 LABEL_COUNT = 2
+TEST_CASE = 1
 
 def image_serving_input_fn():
   """Serving input fn for raw images."""
@@ -121,11 +122,11 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT)]
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*TEST_CASE)]
     items = tf.decode_csv(line, record_defaults)
     prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
     #prices = [0 if x==0.5 else x for x in prices]
-    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT]
+    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*TEST_CASE-LABEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*TEST_CASE]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       operations = tf.cast(operations, tf.float32)
