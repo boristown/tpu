@@ -127,7 +127,7 @@ class ImageNetTFExampleInput(object):
     items = tf.decode_csv(line, record_defaults)
     prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
     #prices = [0 if x==0.5 else x for x in prices]
-    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*TEST_CASE-LABEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*TEST_CASE]
+    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       operations = tf.cast(operations, tf.float32)
