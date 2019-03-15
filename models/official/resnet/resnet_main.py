@@ -45,13 +45,15 @@ from tensorflow.contrib.training.python.training import evaluation
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.estimator import estimator
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 FLAGS = flags.FLAGS
 
 PRICE_COUNT = 16
 DIMENSION_COUNT = 5
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-
+PREDICT_BATCH_SIZE = 31
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
@@ -186,7 +188,7 @@ flags.DEFINE_string(
     'bigtable_train_prefix', 'train_',
     'The prefix identifying training rows.')
 flags.DEFINE_string(
-    'bigtable_eval_prefix', 'validation_',
+    'bigtable_eval_prefix', 'train_',
     'The prefix identifying evaluation rows.')
 flags.DEFINE_string(
     'bigtable_column_family', 'tfexample',
@@ -349,7 +351,7 @@ def resnet_model_fn(features, labels, mode, params):
   #if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
   if FLAGS.transpose_input:
     #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
-    image_size = FLAGS.image_size
+    #image_size = FLAGS.image_size
     #features = tf.reshape(features, [image_size, image_size, 3, -1])
     features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
@@ -375,7 +377,7 @@ def resnet_model_fn(features, labels, mode, params):
     # Computes DropBlock keep_prob for different block groups of ResNet.
     dropblock_groups = [int(x) for x in FLAGS.dropblock_groups.split(',')]
     for block_group in dropblock_groups:
-      if block_group < 1 or block_group > 4:
+      if block_group < 1 or block_group > 7:
         raise ValueError(
             'dropblock_groups should be a comma separated list of integers '
             'between 1 and 4 (dropblcok_groups: {}).'
@@ -407,6 +409,9 @@ def resnet_model_fn(features, labels, mode, params):
         'classes': tf.argmax(logits, axis=1),
         'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
     }
+    tf.logging.info("classes=%s" % (tf.argmax(logits, axis=1)))
+    tf.logging.info("probabilities=%s" % (predictions['probabilities']))
+    
     return tf.estimator.EstimatorSpec(
         mode=mode,
         predictions=predictions,
@@ -650,6 +655,7 @@ def main(unused_argv):
       config=config,
       train_batch_size=FLAGS.train_batch_size,
       eval_batch_size=FLAGS.eval_batch_size,
+      predict_batch_size=PREDICT_BATCH_SIZE,
       export_to_tpu=FLAGS.export_to_tpu)
   assert FLAGS.precision == 'bfloat16' or FLAGS.precision == 'float32', (
       'Invalid value for --precision flag; must be bfloat16 or float32.')
@@ -791,34 +797,43 @@ def main(unused_argv):
         if len(price_files) == 0:
           continue
         tf.logging.info('Starting to predict.')
-        with open(price_files[0],"r") as fcsv:
-          csvreader = csv.reader(fcsv,delimiter = ",")
-          price_batch_size = len(list(csvreader))
+        #with open(price_files[0],"r") as fcsv:
+        #  csvreader = csv.reader(fcsv,delimiter = ",")
+        #  price_batch_size = len(list(csvreader))
+        price_batch_size = PREDICT_BATCH_SIZE
+          
         if price_batch_size == 0:
           continue
+        #predictions = next(resnet_classifier.predict(
+        #  input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
+        #  ), None)
         predictions = resnet_classifier.predict(
           input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
           )
-      
+        
+        tf.logging.info("predictions2 = %s" % predictions)
+        
         # Output predictions to predict-0001.csv BorisTown 
         predict_filename = os.path.join(FLAGS.predict_dir, 'predict-0001.csv')
         predict_file = open(predict_filename, "w")
         predict_file.truncate()
         predict_line = ''
-        tf.logging.info("predictions shape:%s" % (predictions.shape));
+        
         for pred_item in predictions:
-          tf.logging.info("prediction line:%s" % (pred_item));
+          tf.logging.info("prediction line")
           predict_line = ''
           for pred_operation in pred_item['probabilities']:
             if predict_line != '':
               predict_line += ','
             predict_line += str(pred_operation)
-            tf.logging.info("prediction op:%s" % (pred_operation));
+            tf.logging.info("prediction op:%s" % (pred_operation))
           predict_file.write(predict_line+'\n')
         predict_file.close()
-        for price_file in price_files:
-          tf.logging.info('Removing ' + price_file)
-          os.remove(price_file)
+        tf.logging.info('predict_line = %s' % (predict_line))
+        if(predict_line != ''):
+          for price_file in price_files:
+            tf.logging.info('Removing ' + price_file)
+            os.remove(price_file)
             
     if FLAGS.export_dir is not None and FLAGS.mode != 'predict':
       # The guide to serve a exported TensorFlow model is at:

@@ -501,6 +501,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
         units=num_classes,
         kernel_initializer=tf.random_normal_initializer(stddev=.01))
     inputs = tf.identity(inputs, 'final_dense')
+    tf.logging.info("final_dense.shape=%s" % (inputs.shape))
     return inputs
 
   model.default_image_size = PRICE_COUNT

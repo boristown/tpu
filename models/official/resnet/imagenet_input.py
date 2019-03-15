@@ -99,7 +99,7 @@ class ImageNetTFExampleInput(object):
     return prices, operations
 
   def set_predict_shapes(self, batch_size, prices):
-    # tf.logging.info(f'prices.shape2={prices.shape} self.transpose_input={self.transpose_input}')
+    tf.logging.info('prices.shape2=%s self.transpose_input=%s' % (prices.shape, self.transpose_input))
     """Statically set the batch_size dimension."""
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
@@ -108,7 +108,7 @@ class ImageNetTFExampleInput(object):
     else:
       prices.set_shape(prices.get_shape().merge_with(
           tf.TensorShape([batch_size, None, None, None])))
-    # tf.logging.info(f'prices.shape3={prices.shape}')
+    tf.logging.info('prices.shape3=%s' % (prices.shape) )
     return prices
   
   def dataset_parser(self, line):
@@ -144,11 +144,13 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
-    # tf.logging.info(f'line={line}')
+    tf.logging.info('line=%s' % (line))
     # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT)]
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)]
     items = tf.decode_csv(line, record_defaults)
+    #tf.logging.info('items=%s' % (items))
     prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
+    #tf.logging.info('prices0=%s' % (prices))
     #prices = [0 if x==0.5 else x for x in prices]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
@@ -156,7 +158,7 @@ class ImageNetTFExampleInput(object):
       prices = tf.cast(prices, tf.bfloat16)
     prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
     
-    # tf.logging.info(f'prices.shape={prices.shape}')
+    tf.logging.info('prices.shape=%s' % (prices.shape))
     return prices
   
   @abc.abstractmethod
@@ -258,7 +260,7 @@ class ImageNetTFExampleInput(object):
     else:
       current_host = 0
       num_hosts = 1
-
+    tf.logging.info('current_host=%s num_hosts=%s batch_size=%s' % (current_host,num_hosts,batch_size))
     predict_dataset = self.make_predict_dataset(current_host, num_hosts)
 
     # Use the fused map-and-batch operation.
@@ -288,7 +290,7 @@ class ImageNetTFExampleInput(object):
 
     # Prefetch overlaps in-feed with training
     predict_dataset = predict_dataset.prefetch(tf.contrib.data.AUTOTUNE)
-    # tf.logging.info(f'predict_dataset.shape={predict_dataset.shape}')
+    tf.logging.info('predict_dataset=%s' % (predict_dataset))
     return predict_dataset
 
 
@@ -397,7 +399,8 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     def fetch_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
-      buffer_size = 16 * 1024 * 1024  # 16 MiB per file
+      tf.logging.info("filename.shape = %s" % (filename.shape))
+      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
       #dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
       dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       return dataset
@@ -423,19 +426,24 @@ class ImageNetInput(ImageNetTFExampleInput):
     # Shuffle the filenames to ensure better randomization.
     price_file_pattern = os.path.join(
       self.prices_dir, 'price-*')
+    tf.logging.info('price_file_pattern = %s index = %s' % (price_file_pattern,index))
     # For multi-host training, we want each hosts to always process the same
     # subset of files.  Each host only sees a subset of the entire dataset,
     # allowing us to cache larger datasets in memory.
     predict_dataset = tf.data.Dataset.list_files(price_file_pattern, shuffle=False)
+    tf.logging.info('predict_dataset1=%s' % (predict_dataset))
     predict_dataset = predict_dataset.shard(num_hosts, index)
+    tf.logging.info('predict_dataset2=%s' % (predict_dataset))
 
     #if self.is_training and not self.cache:
     #  dataset = dataset.repeat()
 
     def fetch_predict_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
-      buffer_size = 16 * 1024 * 1024  # 8 MiB per file
+      tf.logging.info("filename.shape = %s" % (filename.shape))
+      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
       predict_dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
+      #tf.logging.info("predict_dataset1 = %s" % predict_dataset.shapes)
       return predict_dataset
 
     # Read the data from disk in parallel
@@ -449,6 +457,8 @@ class ImageNetInput(ImageNetTFExampleInput):
     else:
       predict_dataset = dataset.shuffle(1024)
     '''
+
+    tf.logging.info("predict_dataset = %s" % predict_dataset)
     return predict_dataset
   
 # Defines a selection of data from a Cloud Bigtable.
