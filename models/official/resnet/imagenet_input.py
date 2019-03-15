@@ -31,7 +31,7 @@ DIMENSION_COUNT = 10
 CHANNEL_COUNT = 2
 LABEL_COUNT = 2
 TEST_CASE = 1
-MAX_CASE = 8
+MAX_CASE = 10
 
 def image_serving_input_fn():
   """Serving input fn for raw images."""
