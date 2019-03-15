@@ -34,6 +34,7 @@ LABEL_COUNT = 2
 FILTER_COUNT= 1024
 GROWTH_RATE = 64
 USE_DENSENET = False
+MAX_CASE = 10
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
                     data_format='channels_first'):
@@ -495,14 +496,14 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     else:
       inputs = tf.reshape(
           inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
-      
-    inputs = tf.layers.dense(
+    
+    outputarray = [tf.identity(tf.layers.dense(
         inputs=inputs,
         units=num_classes,
-        kernel_initializer=tf.random_normal_initializer(stddev=.01))
-    inputs = tf.identity(inputs, 'final_dense')
-    tf.logging.info("final_dense.shape=%s" % (inputs.shape))
-    return inputs
+        kernel_initializer=tf.random_normal_initializer(stddev=.01)), 'final_dense'+str(k)) for k in range(MAX_CASE)]
+    #output1 = tf.identity(output1, 'final_dense1')
+    #tf.logging.info("final_dense.shape=%s" % (inputs.shape))
+    return outputarray
 
   model.default_image_size = PRICE_COUNT
   return model
