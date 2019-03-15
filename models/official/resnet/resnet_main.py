@@ -357,8 +357,8 @@ def resnet_model_fn(features, labels, mode, params):
     features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
     if mode != tf.estimator.ModeKeys.PREDICT:
-      labels = tf.reshape(labels, [FLAGS.num_label_classes*MAX_CASE, -1])
-      labels = tf.transpose(labels, [1, 0])  # LN to NL
+      labels = tf.reshape(labels, [MAX_CASE, FLAGS.num_label_classes, -1])
+      labels = tf.transpose(labels, [0, 2, 1])  # CLN to CNL
       tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
 
   # Normalize the image to zero mean and unit variance.
@@ -404,7 +404,8 @@ def resnet_model_fn(features, labels, mode, params):
     logits = tf.cast(logits, tf.float32)
   elif FLAGS.precision == 'float32':
     logits = build_network()
-  # tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
+  tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
+  logits = tf.transpose(logits, [1, 0, 2])  # NCL to CNL
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
         'classes': [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)],
@@ -435,7 +436,7 @@ def resnet_model_fn(features, labels, mode, params):
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
       #onehot_labels=one_hot_labels,
-      onehot_labels=labels[k*LABEL_COUNT:(k+1)*LABEL_COUNT]
+      onehot_labels=labels[k]
       label_smoothing=FLAGS.label_smoothing) for k in range(MAX_CASE)]
 
   # Add weight decay to the loss for non-batch-normalization variables.
@@ -557,20 +558,20 @@ def resnet_model_fn(features, labels, mode, params):
       
       in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
       top_accuracys = [tf.metrics.mean(
-          tf.cast(tf.nn.in_top_k(tf.cast(labels[k*LABEL_COUNT:(k+1)*LABEL_COUNT],tf.float32), 
+          tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
       
       return {
-          '1Day_Accuracy': top_accuracy[0],
-          '2Days_Accuracy': top_accuracy[1],
-          '3Days_Accuracy': top_accuracy[2],
-          '4Days_Accuracy': top_accuracy[3],
-          '5Day_Accuracy': top_accuracy[4],
-          '6Days_Accuracy': top_accuracy[5],
-          '7Days_Accuracy': top_accuracy[6],
-          '8Days_Accuracy': top_accuracy[7],
-          '9Days_Accuracy': top_accuracy[8],
-          '10Days_Accuracy': top_accuracy[9],
+          '1Day_Accuracy': top_accuracys[0],
+          '2Days_Accuracy': top_accuracys[1],
+          '3Days_Accuracy': top_accuracys[2],
+          '4Days_Accuracy': top_accuracys[3],
+          '5Day_Accuracy': top_accuracys[4],
+          '6Days_Accuracy': top_accuracys[5],
+          '7Days_Accuracy': top_accuracys[6],
+          '8Days_Accuracy': top_accuracys[7],
+          '9Days_Accuracy': top_accuracys[8],
+          '10Days_Accuracy': top_accuracys[9],
       }
 
     eval_metrics = (metric_fn, [labels, logits])
