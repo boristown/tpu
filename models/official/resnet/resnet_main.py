@@ -556,7 +556,7 @@ def resnet_model_fn(features, labels, mode, params):
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
       predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
       
-      in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
+      #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
       top_accuracys = [tf.metrics.mean(
           tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
