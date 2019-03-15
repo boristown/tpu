@@ -54,6 +54,7 @@ DIMENSION_COUNT = 10
 CHANNEL_COUNT = 2
 LABEL_COUNT = 2
 PREDICT_BATCH_SIZE = 31
+MAX_CASE = 10
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
@@ -356,7 +357,7 @@ def resnet_model_fn(features, labels, mode, params):
     features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
     if mode != tf.estimator.ModeKeys.PREDICT:
-      labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
+      labels = tf.reshape(labels, [FLAGS.num_label_classes*MAX_CASE, -1])
       labels = tf.transpose(labels, [1, 0])  # LN to NL
       tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
 
@@ -406,11 +407,11 @@ def resnet_model_fn(features, labels, mode, params):
   # tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
-        'classes': tf.argmax(logits, axis=1),
-        'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
+        'classes': [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)],
+        'probabilities': [tf.nn.softmax(logits[k], name='softmax_tensor') for k in range(MAX_CASE)]
     }
-    tf.logging.info("classes=%s" % (tf.argmax(logits, axis=1)))
-    tf.logging.info("probabilities=%s" % (predictions['probabilities']))
+    #tf.logging.info("classes=%s" % (tf.argmax(logits, axis=1)))
+    #tf.logging.info("probabilities=%s" % (predictions['probabilities']))
     
     return tf.estimator.EstimatorSpec(
         mode=mode,
@@ -431,14 +432,14 @@ def resnet_model_fn(features, labels, mode, params):
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   #one_hot_labels = labels_reshaped
   
-  cross_entropy = tf.losses.softmax_cross_entropy(
-      logits=logits,
+  cross_entropy = [tf.losses.softmax_cross_entropy(
+      logits=logits[k],
       #onehot_labels=one_hot_labels,
-      onehot_labels=labels,
-      label_smoothing=FLAGS.label_smoothing)
+      onehot_labels=labels[k*LABEL_COUNT:(k+1)*LABEL_COUNT]
+      label_smoothing=FLAGS.label_smoothing) for k in range(MAX_CASE)]
 
   # Add weight decay to the loss for non-batch-normalization variables.
-  loss = cross_entropy + FLAGS.weight_decay * tf.add_n(
+  loss = sum(cross_entropy) + FLAGS.weight_decay * tf.add_n(
       [tf.nn.l2_loss(v) for v in tf.trainable_variables()
        if 'batch_normalization' not in v.name])
 
@@ -552,13 +553,24 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-      predictions = tf.argmax(logits, axis=1)
+      predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
       
-      in_top_1 = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
-      top_1_accuracy = tf.metrics.mean(in_top_1)
+      in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
+      top_accuracys = [tf.metrics.mean(
+          tf.cast(tf.nn.in_top_k(tf.cast(labels[k*LABEL_COUNT:(k+1)*LABEL_COUNT],tf.float32), 
+          predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
       
       return {
-          'top_1_accuracy': top_1_accuracy,
+          '1Day_Accuracy': top_accuracy[0],
+          '2Days_Accuracy': top_accuracy[1],
+          '3Days_Accuracy': top_accuracy[2],
+          '4Days_Accuracy': top_accuracy[3],
+          '5Day_Accuracy': top_accuracy[4],
+          '6Days_Accuracy': top_accuracy[5],
+          '7Days_Accuracy': top_accuracy[6],
+          '8Days_Accuracy': top_accuracy[7],
+          '9Days_Accuracy': top_accuracy[8],
+          '10Days_Accuracy': top_accuracy[9],
       }
 
     eval_metrics = (metric_fn, [labels, logits])
@@ -823,10 +835,11 @@ def main(unused_argv):
           tf.logging.info("prediction line")
           predict_line = ''
           for pred_operation in pred_item['probabilities']:
-            if predict_line != '':
-              predict_line += ','
-            predict_line += str(pred_operation)
-            tf.logging.info("prediction op:%s" % (pred_operation))
+            for k in range(MAX_CASE):
+              if predict_line != '':
+                predict_line += ','
+              predict_line += str(pred_operation[k])
+              #tf.logging.info("prediction op:%s" % (pred_operation))
           predict_file.write(predict_line+'\n')
         predict_file.close()
         tf.logging.info('predict_line = %s' % (predict_line))
