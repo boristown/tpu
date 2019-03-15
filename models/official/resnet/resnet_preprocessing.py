@@ -19,9 +19,9 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-PRICE_COUNT = 16
-DIMENSION_COUNT = 5
-CHANNEL_COUNT = 1
+PRICE_COUNT = 10
+DIMENSION_COUNT = 10
+CHANNEL_COUNT = 2
 LABEL_COUNT = 2
 CROP_PADDING = 32
 
