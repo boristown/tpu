@@ -405,7 +405,7 @@ def resnet_model_fn(features, labels, mode, params):
   elif FLAGS.precision == 'float32':
     logits = build_network()
   tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
-  logits = tf.transpose(logits, [1, 0, 2])  # NCL to CNL
+  #logits = tf.transpose(logits, [1, 0, 2])  # NCL to CNL
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
         'classes': [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)],
