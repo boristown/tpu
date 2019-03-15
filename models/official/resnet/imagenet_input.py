@@ -31,6 +31,7 @@ DIMENSION_COUNT = 10
 CHANNEL_COUNT = 2
 LABEL_COUNT = 2
 TEST_CASE = 1
+MAX_CASE = 8
 
 def image_serving_input_fn():
   """Serving input fn for raw images."""
@@ -122,7 +123,7 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*TEST_CASE)]
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE)]
     items = tf.decode_csv(line, record_defaults)
     prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
     #prices = [0 if x==0.5 else x for x in prices]
