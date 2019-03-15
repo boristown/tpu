@@ -805,12 +805,15 @@ def main(unused_argv):
         predict_file = open(predict_filename, "w")
         predict_file.truncate()
         predict_line = ''
+        tf.logging.info("predictions shape:%s" % (predictions.shape));
         for pred_item in predictions:
+          tf.logging.info("prediction line:%s" % (pred_item));
           predict_line = ''
           for pred_operation in pred_item['probabilities']:
             if predict_line != '':
               predict_line += ','
             predict_line += str(pred_operation)
+            tf.logging.info("prediction op:%s" % (pred_operation));
           predict_file.write(predict_line+'\n')
         predict_file.close()
         for price_file in price_files:
