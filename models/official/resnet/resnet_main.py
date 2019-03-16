@@ -408,11 +408,12 @@ def resnet_model_fn(features, labels, mode, params):
   #logits = tf.transpose(logits, [1, 0, 2])  # NCL to CNL
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
-        'classes': [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)],
-        'probabilities': [tf.nn.softmax(logits[k], name='softmax_tensor') for k in range(MAX_CASE)]
-    }
-    #tf.logging.info("classes=%s" % (tf.argmax(logits, axis=1)))
-    #tf.logging.info("probabilities=%s" % (predictions['probabilities']))
+        'classes': tf.argmax(logits, axis=2),
+        'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
+        
+}
+    tf.logging.info("classes=%s" % (tf.argmax(logits, axis=2)))
+    tf.logging.info("probabilities=%s" % (predictions['probabilities']))
     
     return tf.estimator.EstimatorSpec(
         mode=mode,
@@ -831,19 +832,31 @@ def main(unused_argv):
         predict_file = open(predict_filename, "w")
         predict_file.truncate()
         predict_line = ''
+
+        outarray = np.zeros([PREDICT_BATCH_SIZE, MAX_CASE*LABEL_COUNT])
         
-        for pred_item in predictions:
-          tf.logging.info("prediction line")
-          predict_line = ''
-          for pred_operation in pred_item['probabilities']:
-            for k in range(MAX_CASE):
-              if predict_line != '':
-                predict_line += ','
-              predict_line += str(pred_operation[k])
+        for case_index, pred_item in enumerate(predictions):
+          #tf.logging.info("pred_item_probabilities=%s" % (pred_item['probabilities']))
+          #predict_line = ''
+          for batch_index, pred_operation in enumerate(pred_item['probabilities']):
+            #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
+            for label_index in range(LABEL_COUNT):
+              #predict_line += str(pred_operation[k])
               #tf.logging.info("prediction op:%s" % (pred_operation))
+              outarray[batch_index][case_index*LABEL_COUNT+label_index] = pred_operation[label_index]
+          #predict_file.write(predict_line+'\n')
+        #predict_file.close()
+        
+        #tf.logging.info('predict_line = %s' % (predict_line))
+        for pred_row in outarray:
+          predict_line = ''
+          for pred_col in pred_row:
+            if predict_line != '':
+              predict_line += ','
+            predict_line += str(pred_col)
           predict_file.write(predict_line+'\n')
+          tf.logging.info('%s' % (predict_line))
         predict_file.close()
-        tf.logging.info('predict_line = %s' % (predict_line))
         if(predict_line != ''):
           for price_file in price_files:
             tf.logging.info('Removing ' + price_file)
