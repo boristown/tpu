@@ -53,7 +53,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 2
 LABEL_COUNT = 2
-PREDICT_BATCH_SIZE = 31
+#PREDICT_BATCH_SIZE = 31
 MAX_CASE = 10
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
@@ -567,7 +567,7 @@ def resnet_model_fn(features, labels, mode, params):
           '2Days_Accuracy': top_accuracys[1],
           '3Days_Accuracy': top_accuracys[2],
           '4Days_Accuracy': top_accuracys[3],
-          '5Day_Accuracy': top_accuracys[4],
+          '5Days_Accuracy': top_accuracys[4],
           '6Days_Accuracy': top_accuracys[5],
           '7Days_Accuracy': top_accuracys[6],
           '8Days_Accuracy': top_accuracys[7],
@@ -669,7 +669,7 @@ def main(unused_argv):
       config=config,
       train_batch_size=FLAGS.train_batch_size,
       eval_batch_size=FLAGS.eval_batch_size,
-      predict_batch_size=PREDICT_BATCH_SIZE,
+      #predict_batch_size=PREDICT_BATCH_SIZE,
       export_to_tpu=FLAGS.export_to_tpu)
   assert FLAGS.precision == 'bfloat16' or FLAGS.precision == 'float32', (
       'Invalid value for --precision flag; must be bfloat16 or float32.')
@@ -811,10 +811,10 @@ def main(unused_argv):
         if len(price_files) == 0:
           continue
         tf.logging.info('Starting to predict.')
-        #with open(price_files[0],"r") as fcsv:
-        #  csvreader = csv.reader(fcsv,delimiter = ",")
-        #  price_batch_size = len(list(csvreader))
-        price_batch_size = PREDICT_BATCH_SIZE
+        with open(price_files[0],"r") as fcsv:
+          csvreader = csv.reader(fcsv,delimiter = ",")
+          price_batch_size = len(list(csvreader))
+        # price_batch_size = PREDICT_BATCH_SIZE
           
         if price_batch_size == 0:
           continue
@@ -833,7 +833,7 @@ def main(unused_argv):
         predict_file.truncate()
         predict_line = ''
 
-        outarray = np.zeros([PREDICT_BATCH_SIZE, MAX_CASE*LABEL_COUNT])
+        outarray = np.zeros([price_batch_size, MAX_CASE*LABEL_COUNT])
         
         for case_index, pred_item in enumerate(predictions):
           #tf.logging.info("pred_item_probabilities=%s" % (pred_item['probabilities']))
@@ -842,9 +842,9 @@ def main(unused_argv):
             #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
             for label_index in range(LABEL_COUNT):
               #predict_line += str(pred_operation[k])
-              #tf.logging.info("prediction op:%s" % (pred_operation))
+              #tf.logging.info("prediction op:%s" % (pred_operation[label_index]))
               outarray[batch_index][case_index*LABEL_COUNT+label_index] = pred_operation[label_index]
-          #predict_file.write(predict_line+'\n')
+           #predict_file.write(predict_line+'\n')
         #predict_file.close()
         
         #tf.logging.info('predict_line = %s' % (predict_line))

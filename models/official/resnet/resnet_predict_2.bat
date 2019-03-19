@@ -3,8 +3,8 @@ python resnet_main.py ^
 --train_steps=7000 ^
 --train_batch_size=100 ^
 --eval_batch_size=100 ^
---num_train_images=100 ^
---num_eval_images=100 ^
+--num_train_images=529 ^
+--num_eval_images=529 ^
 --steps_per_eval=100 ^
 --iterations_per_loop=100 ^
 --resnet_depth=50 ^
