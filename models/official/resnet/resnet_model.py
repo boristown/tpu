@@ -420,6 +420,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
 
   def model(inputs, is_training):
     """Creation of the model graph."""
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
     LAYERS_SUM = sum(layers)
     if USE_DENSENET:
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
@@ -441,6 +442,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
           inputs=inputs, filters=int(FILTER_COUNT/256), kernel_size=2, strides=1,
           data_format=data_format)
+      tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
       
