@@ -270,7 +270,7 @@ flags.DEFINE_float(
     help=('keep_prob parameter of DropBlock. Will not be used if '
           'dropblock_groups is empty.'))
 flags.DEFINE_integer(
-    'dropblock_size', default=7,
+    'dropblock_size', default=8,
     help=('size parameter of DropBlock. Will not be used if dropblock_groups '
           'is empty.'))
 
@@ -367,7 +367,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   # DropBlock keep_prob for the 4 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
-  dropblock_keep_probs = [None] * 7
+  dropblock_keep_probs = [None] * 8
   if FLAGS.dropblock_groups:
     # Scheduled keep_prob for DropBlock.
     train_steps = tf.cast(FLAGS.train_steps, tf.float32)
