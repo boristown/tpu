@@ -522,7 +522,7 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
   """Returns the ResNet model for a given size and number of output classes."""
   model_params = {
       18: {'block': residual_block, 'layers': [2, 2, 2, 2]},
-      34: {'block': residual_block, 'layers': [3, 3, 3, 2, 2, 2, 2, 2},
+      34: {'block': residual_block, 'layers': [3, 3, 3, 2, 2, 2, 2, 2]},
       50: {'block': bottleneck_block, 'layers': [3, 3, 3, 2, 2, 2, 2, 2]},
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
