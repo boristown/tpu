@@ -103,7 +103,7 @@ flags.DEFINE_string(
 flags.DEFINE_integer(
     'resnet_depth', default=50,
     help=('Depth of ResNet model to use. Must be one of {18, 34, 50, 101, 152,'
-          ' 200}. ResNet-18 and 34 use the pre-activation residual blocks'
+          ' 200, 1000}. ResNet-18 and 34 use the pre-activation residual blocks'
           ' without bottleneck layers. The other models use pre-activation'
           ' bottleneck layers. Deeper models require more training time and'
           ' more memory and may require reducing --train_batch_size to prevent'

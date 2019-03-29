@@ -31,7 +31,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 2048
+FILTER_COUNT= 243
 GROWTH_RATE = 64
 USE_DENSENET = False
 MAX_CASE = 10
@@ -440,47 +440,47 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     else:
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
-          inputs=inputs, filters=int(FILTER_COUNT/256), kernel_size=2, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT/81), kernel_size=2, strides=1,
           data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
       
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/128), block_fn=block_fn, blocks=layers[0],
+          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[0],
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[1],
+          inputs=inputs, filters=int(FILTER_COUNT/49), block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[2],
+          inputs=inputs, filters=int(FILTER_COUNT/36), block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[3],
+          inputs=inputs, filters=int(FILTER_COUNT/25), block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
 
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/8), block_fn=block_fn, blocks=layers[4],
+          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[4],
           strides=1, is_training=is_training, name='block_group5',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[4],
           dropblock_size=dropblock_size)
     
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[5],
+          inputs=inputs, filters=int(FILTER_COUNT/9), block_fn=block_fn, blocks=layers[5],
           strides=1, is_training=is_training, name='block_group6',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[5],
           dropblock_size=dropblock_size)
         
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[6],
+          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[6],
           strides=1, is_training=is_training, name='block_group7',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[6],
           dropblock_size=dropblock_size)
@@ -526,7 +526,8 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
       50: {'block': bottleneck_block, 'layers': [3, 3, 3, 2, 2, 2, 2, 2]},
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
-      200: {'block': bottleneck_block, 'layers': [3, 24, 36, 3]}
+      200: {'block': bottleneck_block, 'layers': [3, 24, 36, 3]},
+      1000: {'block': bottleneck_block, 'layers': [41, 41, 41, 41, 41, 41, 42, 42]},
   }
 
   if resnet_depth not in model_params:
