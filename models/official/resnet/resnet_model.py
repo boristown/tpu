@@ -527,6 +527,7 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
       200: {'block': bottleneck_block, 'layers': [8, 8, 8, 8, 8, 8, 8, 8]},
+      400: {'block': bottleneck_block, 'layers': [16, 16, 16, 16, 17, 17, 17, 17]},
       1000: {'block': bottleneck_block, 'layers': [41, 41, 41, 41, 41, 41, 42, 42]},
   }
 
