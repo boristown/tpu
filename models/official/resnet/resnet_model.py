@@ -31,7 +31,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 243
+FILTER_COUNT= 162
 GROWTH_RATE = 64
 USE_DENSENET = False
 MAX_CASE = 10
@@ -381,7 +381,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
                       data_format=data_format,
                       dropblock_keep_prob=dropblock_keep_prob,
                       dropblock_size=dropblock_size)
-    tf.logging.info("inputs.shape=%s" % (inputs.shape))
+    #tf.logging.info("inputs.shape=%s" % (inputs.shape))
 
   return tf.identity(inputs, name)
 
