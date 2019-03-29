@@ -31,7 +31,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 162
+FILTER_COUNT= 324
 GROWTH_RATE = 64
 USE_DENSENET = False
 MAX_CASE = 10
@@ -526,7 +526,7 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
       50: {'block': bottleneck_block, 'layers': [3, 3, 3, 2, 2, 2, 2, 2]},
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
-      200: {'block': bottleneck_block, 'layers': [3, 24, 36, 3]},
+      200: {'block': bottleneck_block, 'layers': [8, 8, 8, 8, 8, 8, 8, 8]},
       1000: {'block': bottleneck_block, 'layers': [41, 41, 41, 41, 41, 41, 42, 42]},
   }
 
