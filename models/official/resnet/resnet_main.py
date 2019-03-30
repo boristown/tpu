@@ -260,7 +260,7 @@ flags.DEFINE_bool(
 flags.DEFINE_integer('image_size', 4, 'The input image size.')
 
 flags.DEFINE_string(
-    'dropblock_groups', '5',
+    'dropblock_groups', '3',
     help=('A string containing comma separated integers indicating ResNet '
           'block groups to apply DropBlock. `3,4` means to apply DropBlock to '
           'block groups 3 and 4. Use an empty string to not apply DropBlock to '
@@ -367,7 +367,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   # DropBlock keep_prob for the 4 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
-  dropblock_keep_probs = [None] * 8
+  dropblock_keep_probs = [None] * 4
   if FLAGS.dropblock_groups:
     # Scheduled keep_prob for DropBlock.
     train_steps = tf.cast(FLAGS.train_steps, tf.float32)
@@ -378,13 +378,13 @@ def resnet_model_fn(features, labels, mode, params):
     # Computes DropBlock keep_prob for different block groups of ResNet.
     dropblock_groups = [int(x) for x in FLAGS.dropblock_groups.split(',')]
     for block_group in dropblock_groups:
-      if block_group < 1 or block_group > 8:
+      if block_group < 1 or block_group > 4:
         raise ValueError(
             'dropblock_groups should be a comma separated list of integers '
-            'between 1 and 8 (dropblcok_groups: {}).'
+            'between 1 and 4 (dropblcok_groups: {}).'
             .format(FLAGS.dropblock_groups))
       dropblock_keep_probs[block_group - 1] = 1 - (
-          (1 - dropblock_keep_prob) / 8.0**(8 - block_group))
+          (1 - dropblock_keep_prob) / 4.0**(4 - block_group))
 
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
