@@ -387,8 +387,8 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     # Shuffle the filenames to ensure better randomization.
     file_pattern = os.path.join(
-    #  self.data_dir, 'train-*' if self.is_training else 'validation-*')
-      self.data_dir, 'train-*')
+      self.data_dir, 'train-*' if self.is_training else 'validation-*')
+    #  self.data_dir, 'train-*')
     #raise Exception(f'file_pattern = {filename} in class ImageNetInput')
     # For multi-host training, we want each hosts to always process the same
     # subset of files.  Each host only sees a subset of the entire dataset,
@@ -427,7 +427,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     # Shuffle the filenames to ensure better randomization.
     price_file_pattern = os.path.join(
-      self.prices_dir, 'evaluation-*')
+      self.prices_dir, 'price-*')
     tf.logging.info('price_file_pattern = %s index = %s' % (price_file_pattern,index))
     # For multi-host training, we want each hosts to always process the same
     # subset of files.  Each host only sees a subset of the entire dataset,
