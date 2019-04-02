@@ -860,7 +860,8 @@ def main(unused_argv):
         if(predict_line != ''):
           for price_file in price_files:
             tf.logging.info('Removing ' + price_file)
-            os.remove(price_file)
+            price_file_new = price_file.replace("price-", "backup-")
+            os.price_file(price_file, price_file_new)
             
     if FLAGS.export_dir is not None and FLAGS.mode != 'predict':
       # The guide to serve a exported TensorFlow model is at:
