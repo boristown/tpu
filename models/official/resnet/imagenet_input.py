@@ -138,6 +138,44 @@ class ImageNetTFExampleInput(object):
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices,operations
 
+  def dataset_parser_tfrecord(self, line):
+    """Parses prices and its operations from a serialized ResNet-50 TFExample.
+
+    Args:
+      value: serialized string containing an ImageNet TFExample.
+
+    Returns:
+      Returns a tuple of (prices, operations) from the TFExample.
+    """
+	"""
+    # Decode the csv_line to tensor.
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE)]
+    items = tf.decode_csv(line, record_defaults)
+    prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
+    #prices = [0 if x==0.5 else x for x in prices]
+    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE]
+	"""
+	keys_to_features = {
+        'prices' : tf.FixedLenFeature([100], tf.float32, default_value=[0.0]*100),
+		'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
+    }
+
+    parsed = tf.parse_single_example(line, keys_to_features)
+	
+	prices = parsed['prices']
+	operations = parsed['label']
+	
+	
+    if not self.use_bfloat16:
+      prices = tf.cast(prices, tf.float32)
+      operations = tf.cast(operations, tf.int32)
+    else:
+      prices = tf.cast(prices, tf.bfloat16)
+      operations = tf.cast(operations, tf.int32)
+    prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
+    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
+    return prices,operations
+	
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
     Args:
