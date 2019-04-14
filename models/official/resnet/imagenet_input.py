@@ -173,6 +173,13 @@ class ImageNetTFExampleInput(object):
       prices = tf.cast(prices, tf.bfloat16)
       operations = tf.cast(operations, tf.int32)
     prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
+	operations = tf.reshape(operations, [1,1])
+	operations = tf.tile(operations, [MAX_CASE, LABEL_COUNT])
+	for i in range(MAX_CASE):
+		for j in range(MAX_CASE-1-i):
+			operations[i][1] = tf.cast(tf.div(operations[i][1],2,name=None), tf.int32)
+		operations[i][1] = tf.mod(operations[i][1], 2,name=None)
+		operations[i][0] = 1-operations[i][1]
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices,operations
 	
@@ -244,7 +251,7 @@ class ImageNetTFExampleInput(object):
       current_host = 0
       num_hosts = 1
 
-    dataset = self.make_source_dataset(current_host, num_hosts)
+    dataset = self.make_source_dataset_tfrecord(current_host, num_hosts)
 
     # Use the fused map-and-batch operation.
     #
@@ -258,7 +265,7 @@ class ImageNetTFExampleInput(object):
     # exactly the same images will be used.
     dataset = dataset.apply(
         tf.contrib.data.map_and_batch(
-            self.dataset_parser, batch_size=batch_size,
+            self.dataset_parser_tfrecord, batch_size=batch_size,
             num_parallel_batches=self.num_parallel_calls, drop_remainder=True))
 
     # Transpose for performance on TPU
@@ -409,6 +416,13 @@ class ImageNetInput(ImageNetTFExampleInput):
     if not self.data_dir:
       return value, tf.constant(0, tf.int32)
     return super(ImageNetInput, self).dataset_parser(value)
+	
+  def dataset_parser_tfrecord(self, value):
+    """See base class."""
+    #raise Exception('This is dataset_parser in class ImageNetInput')
+    if not self.data_dir:
+      return value, tf.constant(0, tf.int32)
+    return super(ImageNetInput, self).dataset_parser_tfrecord(value)
 
   def dataset_predict_parser(self, value):
     """See base class."""
@@ -417,7 +431,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       return value
     return super(ImageNetInput, self).dataset_predict_parser(value)
   
-  def make_source_dataset(self, index, num_hosts):
+  def make_source_dataset_tfrecord(self, index, num_hosts):
     """See base class."""
     if not self.data_dir:
       tf.logging.info('Undefined data_dir implies null input')
@@ -440,9 +454,9 @@ class ImageNetInput(ImageNetTFExampleInput):
     def fetch_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
       tf.logging.info("filename.shape = %s" % (filename.shape))
-      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
-      #dataset = tf.data.TFRecordDataset(filename, buffer_size=buffer_size)
-      dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
+      buffer_size = 16 * 1024 * 1024  # 16 MiB per file
+      dataset = tf.data.TFRecordDataset(filename, compression_type="ZLIB", buffer_size=buffer_size)
+      #dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       return dataset
 
     # Read the data from disk in parallel

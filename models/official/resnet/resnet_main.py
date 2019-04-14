@@ -360,6 +360,7 @@ def resnet_model_fn(features, labels, mode, params):
       labels = tf.reshape(labels, [MAX_CASE, FLAGS.num_label_classes, -1])
       labels = tf.transpose(labels, [0, 2, 1])  # CLN to CNL
       tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
+    
 
   # Normalize the image to zero mean and unit variance.
   #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
@@ -433,7 +434,7 @@ def resnet_model_fn(features, labels, mode, params):
   #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   #one_hot_labels = labels_reshaped
-  
+
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
       #onehot_labels=one_hot_labels,
