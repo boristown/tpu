@@ -260,7 +260,8 @@ flags.DEFINE_bool(
 flags.DEFINE_integer('image_size', 4, 'The input image size.')
 
 flags.DEFINE_string(
-    'dropblock_groups', '5,6,7,8',
+    #'dropblock_groups', '5,6,7,8',
+    'dropblock_groups', '',
     help=('A string containing comma separated integers indicating ResNet '
           'block groups to apply DropBlock. `3,4` means to apply DropBlock to '
           'block groups 3 and 4. Use an empty string to not apply DropBlock to '
