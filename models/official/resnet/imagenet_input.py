@@ -214,7 +214,7 @@ class ImageNetTFExampleInput(object):
     return prices
   
   @abc.abstractmethod
-  def make_source_dataset(self, index, num_hosts):
+  def make_source_dataset_tfrecord(self, index, num_hosts):
     """Makes dataset of serialized TFExamples.
 
     The returned dataset will contain `tf.string` tensors, but these strings are
