@@ -23,6 +23,7 @@ from collections import namedtuple
 import functools
 import os
 import tensorflow as tf
+import numpy as np
 # from official.resnet import resnet_preprocessing
 #import resnet_preprocessing
 
@@ -147,25 +148,16 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
-	"""
-    # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE)]
-    items = tf.decode_csv(line, record_defaults)
-    prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
-    #prices = [0 if x==0.5 else x for x in prices]
-    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE]
-	"""
-	keys_to_features = {
+    keys_to_features = {
         'prices' : tf.FixedLenFeature([100], tf.float32, default_value=[0.0]*100),
-		'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
+        'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
 
     parsed = tf.parse_single_example(line, keys_to_features)
-	
-	prices = parsed['prices']
-	operations = parsed['label']
-	
-	
+    
+    prices = parsed['prices']
+    operations = parsed['label']
+    
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       operations = tf.cast(operations, tf.int32)
@@ -173,16 +165,29 @@ class ImageNetTFExampleInput(object):
       prices = tf.cast(prices, tf.bfloat16)
       operations = tf.cast(operations, tf.int32)
     prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
-	operations = tf.reshape(operations, [1,1])
-	operations = tf.tile(operations, [MAX_CASE, LABEL_COUNT])
-	for i in range(MAX_CASE):
-		for j in range(MAX_CASE-1-i):
-			operations[i][1] = tf.cast(tf.div(operations[i][1],2,name=None), tf.int32)
-		operations[i][1] = tf.mod(operations[i][1], 2,name=None)
-		operations[i][0] = 1-operations[i][1]
-    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
-    return prices,operations
-	
+    operations = tf.reshape(operations, [1,1])
+    #operations = tf.tile(operations, [MAX_CASE, LABEL_COUNT])
+    #op_list = np.zeros([MAX_CASE, LABEL_COUNT])
+    operationMod = tf.mod(operations, 2)
+    operationDiv = tf.floordiv(operations, 2)
+    labels = tf.identity(operationMod)
+    for i in range(MAX_CASE-1):
+        operationMod = tf.mod(operationDiv, 2)
+        operationDiv = tf.floordiv(operationDiv, 2)
+        #op_list[i][1] = parsed['label']
+        labels = tf.concat([operationMod, labels], 0)
+        tf.logging.info("labels=%s" % (labels.shape))
+        #for j in range(MAX_CASE-1-i):
+        #    operations[i][1] = tf.floordiv(operations[i][1], 2)
+        #operations[i][1] = tf.mod(operations[i][1], 2)
+        #operations[i][0] = tf.subtract(1, op_list[i][1])
+    #operations = tf.cast(tf.stack(op_list), tf.int32)
+    labels2 = tf.subtract(1, labels)
+    labels = tf.concat([labels2, labels], 1)
+    labels = tf.reshape(labels, [-1])
+    tf.logging.info("prices=%s,labels=%s" % (prices.shape,labels.shape))
+    return prices,labels
+    
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
     Args:
@@ -416,7 +421,7 @@ class ImageNetInput(ImageNetTFExampleInput):
     if not self.data_dir:
       return value, tf.constant(0, tf.int32)
     return super(ImageNetInput, self).dataset_parser(value)
-	
+    
   def dataset_parser_tfrecord(self, value):
     """See base class."""
     #raise Exception('This is dataset_parser in class ImageNetInput')
