@@ -31,7 +31,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 1024
+FILTER_COUNT= 2048
 GROWTH_RATE = 64
 USE_DENSENET = False
 MAX_CASE = 10
@@ -327,8 +327,8 @@ def bottleneck_block(inputs, filters, is_training, strides,
   shortcut = inputs
   if use_projection:
     # Projection shortcut only in first block within a group. Bottleneck blocks
-    # end with 4 times the number of filters.
-    filters_out = 4 * filters
+    # end with 2 times the number of filters.
+    filters_out = 2 * filters
     inputs = conv2d_fixed_padding(
         inputs=inputs, filters=filters_out, kernel_size=[2 if inputs.shape[1]>=2 else inputs.shape[1],2 if inputs.shape[2]>=2 else inputs.shape[2]], strides=1,
         data_format=data_format)
@@ -358,7 +358,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=4 * filters, kernel_size=1, strides=1,
+      inputs=inputs, filters=2 * filters, kernel_size=1, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
                            data_format=data_format)
@@ -531,10 +531,10 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_avg_pool')
     if not USE_DENSENET:
       inputs = tf.reshape(
-          inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
+          inputs, [-1, FILTER_COUNT*2 if block_fn is bottleneck_block else FILTER_COUNT])
     else:
       inputs = tf.reshape(
-          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
+          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*2 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
     
     outputarray = [tf.identity(tf.layers.dense(
         inputs=inputs,
