@@ -287,7 +287,7 @@ class ImageNetTFExampleInput(object):
     return dataset
 
 
-  def predict_input_fn(self, params, batch_size):
+  def predict_input_fn(self, params, batch_size, filepattern):
     """Input function which provides a single batch for predict.
 
     Args:
@@ -313,7 +313,7 @@ class ImageNetTFExampleInput(object):
       current_host = 0
       num_hosts = 1
     tf.logging.info('current_host=%s num_hosts=%s batch_size=%s' % (current_host,num_hosts,batch_size))
-    predict_dataset = self.make_predict_dataset(current_host, num_hosts)
+    predict_dataset = self.make_predict_dataset(current_host, num_hosts, filepattern)
 
     # Use the fused map-and-batch operation.
     #
@@ -476,7 +476,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       dataset = dataset.shuffle(1024)
     return dataset
 
-  def make_predict_dataset(self, index, num_hosts):
+  def make_predict_dataset(self, index, num_hosts, filepattern):
     """See base class."""
     if not self.prices_dir:
       tf.logging.info('Undefined prices_dir implies null input')
@@ -484,7 +484,8 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     # Shuffle the filenames to ensure better randomization.
     price_file_pattern = os.path.join(
-      self.prices_dir, 'price-*')
+      #self.prices_dir, 'price-*')
+      self.prices_dir, filepattern)
     tf.logging.info('price_file_pattern = %s index = %s' % (price_file_pattern,index))
     # For multi-host training, we want each hosts to always process the same
     # subset of files.  Each host only sees a subset of the entire dataset,

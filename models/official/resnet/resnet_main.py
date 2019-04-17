@@ -31,6 +31,7 @@ from absl import flags
 import absl.logging as _logging  # pylint: disable=unused-import
 import numpy as np
 import tensorflow as tf
+import re
 
 from common import tpu_profiler_hook
 #from official.resnet import imagenet_input2
@@ -806,64 +807,71 @@ def main(unused_argv):
     else: # FLAGS.mode == 'predict'
       
       price_file_pattern = os.path.join(
-        FLAGS.prices_dir, 'price-*')
+        FLAGS.prices_dir, 'price-*.csv')
       while True:
         time.sleep(10)
         price_files  = glob.glob(price_file_pattern)
         if len(price_files) == 0:
           continue
         tf.logging.info('Starting to predict.')
-        with open(price_files[0],"r") as fcsv:
-          csvreader = csv.reader(fcsv,delimiter = ",")
-          price_batch_size = len(list(csvreader))
-        # price_batch_size = PREDICT_BATCH_SIZE
+        for price_file_item in price_files:
+          with open(price_file_item,"r") as fcsv:
+            csvreader = csv.reader(fcsv,delimiter = ",")
+            price_batch_size = len(list(csvreader))
+          # price_batch_size = PREDICT_BATCH_SIZE
           
-        if price_batch_size == 0:
-          continue
-        #predictions = next(resnet_classifier.predict(
-        #  input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
-        #  ), None)
-        predictions = resnet_classifier.predict(
-          input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
-          )
-        
-        tf.logging.info("predictions2 = %s" % predictions)
-        
-        # Output predictions to predict-0001.csv BorisTown 
-        predict_filename = os.path.join(FLAGS.predict_dir, 'predict-0001.csv')
-        predict_file = open(predict_filename, "w")
-        predict_file.truncate()
-        predict_line = ''
-
-        outarray = np.zeros([price_batch_size, MAX_CASE*LABEL_COUNT])
-        
-        for case_index, pred_item in enumerate(predictions):
-          #tf.logging.info("pred_item_probabilities=%s" % (pred_item['probabilities']))
-          #predict_line = ''
-          for batch_index, pred_operation in enumerate(pred_item['probabilities']):
-            #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
-            for label_index in range(LABEL_COUNT):
-              #predict_line += str(pred_operation[k])
-              #tf.logging.info("prediction op:%s" % (pred_operation[label_index]))
-              outarray[batch_index][case_index*LABEL_COUNT+label_index] = pred_operation[label_index]
-           #predict_file.write(predict_line+'\n')
-        #predict_file.close()
-        
-        #tf.logging.info('predict_line = %s' % (predict_line))
-        for pred_row in outarray:
+          if price_batch_size == 0:
+            continue
+          #predictions = next(resnet_classifier.predict(
+          #  input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
+          #  ), None)
+          predictions = resnet_classifier.predict(
+            input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size, os.path.basename(price_file_item)),
+            )
+          
+          tf.logging.info("predictions2 = %s" % predictions)
+          
+          # Output predictions to predict-0001.csv BorisTown 
+          predict_filename = os.path.join(FLAGS.predict_dir, 'predict-0001.csv')
+          if len(price_files) > 1:
+            dirname = re.findall(r"price-(.+?)_\d+?\.csv",price_file_item)[0]
+            dirpath = os.path.join(FLAGS.predict_dir, dirname)
+            if not os.path.exists(dirpath):
+              os.makedirs(dirpath)
+            predict_filename = os.path.join(dirpath, 'predict-0001.csv')
+          predict_file = open(predict_filename, "w")
+          predict_file.truncate()
           predict_line = ''
-          for pred_col in pred_row:
-            if predict_line != '':
-              predict_line += ','
-            predict_line += str(pred_col)
-          predict_file.write(predict_line+'\n')
-          tf.logging.info('%s' % (predict_line))
-        predict_file.close()
-        if(predict_line != ''):
-          for price_file in price_files:
-            tf.logging.info('Removing ' + price_file)
-            price_file_new = price_file.replace("price-", "backup-")
-            os.rename(price_file, price_file_new)
+          
+          outarray = np.zeros([price_batch_size, MAX_CASE*LABEL_COUNT])
+          
+          for case_index, pred_item in enumerate(predictions):
+            #tf.logging.info("pred_item_probabilities=%s" % (pred_item['probabilities']))
+            #predict_line = ''
+            for batch_index, pred_operation in enumerate(pred_item['probabilities']):
+              #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
+              for label_index in range(LABEL_COUNT):
+                #predict_line += str(pred_operation[k])
+                #tf.logging.info("prediction op:%s" % (pred_operation[label_index]))
+                outarray[batch_index][case_index*LABEL_COUNT+label_index] = pred_operation[label_index]
+             #predict_file.write(predict_line+'\n')
+          #predict_file.close()
+          
+          #tf.logging.info('predict_line = %s' % (predict_line))
+          for pred_row in outarray:
+            predict_line = ''
+            for pred_col in pred_row:
+              if predict_line != '':
+                predict_line += ','
+              predict_line += str(pred_col)
+            predict_file.write(predict_line+'\n')
+            tf.logging.info('%s' % (predict_line))
+          predict_file.close()
+          if(predict_line != ''):
+            #for price_file in price_files:
+            tf.logging.info('Removing ' + price_file_item)
+            price_file_new = price_file_item.replace("price-", "backup-")
+            os.rename(price_file_item, price_file_new)
             
     if FLAGS.export_dir is not None and FLAGS.mode != 'predict':
       # The guide to serve a exported TensorFlow model is at:
