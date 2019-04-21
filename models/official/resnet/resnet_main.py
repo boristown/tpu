@@ -272,7 +272,7 @@ flags.DEFINE_float(
     help=('keep_prob parameter of DropBlock. Will not be used if '
           'dropblock_groups is empty.'))
 flags.DEFINE_integer(
-    'dropblock_size', default=1,
+    'dropblock_size', default=2,
     help=('size parameter of DropBlock. Will not be used if dropblock_groups '
           'is empty.'))
 
