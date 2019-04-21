@@ -268,7 +268,7 @@ flags.DEFINE_string(
           'block groups 3 and 4. Use an empty string to not apply DropBlock to '
           'any block group.'))
 flags.DEFINE_float(
-    'dropblock_keep_prob', default=0.33,
+    'dropblock_keep_prob', default=0.2,
     help=('keep_prob parameter of DropBlock. Will not be used if '
           'dropblock_groups is empty.'))
 flags.DEFINE_integer(
