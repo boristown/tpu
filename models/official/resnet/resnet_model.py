@@ -445,7 +445,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
   if dropblock_keep_probs is None:
     dropblock_keep_probs = [None] * 9
   if not isinstance(dropblock_keep_probs,
-                    list) or len(dropblock_keep_probs) != 8:
+                    list) or len(dropblock_keep_probs) != 9:
     raise ValueError('dropblock_keep_probs is not valid:', dropblock_keep_probs)
 
   def model(inputs, is_training):
