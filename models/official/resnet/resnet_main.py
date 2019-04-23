@@ -261,7 +261,7 @@ flags.DEFINE_bool(
 flags.DEFINE_integer('image_size', 4, 'The input image size.')
 
 flags.DEFINE_string(
-    'dropblock_groups', '1,2,3,4,5,6,7,8',
+    'dropblock_groups', '6,7,8,9',
     #'dropblock_groups', '6,7,8',
     help=('A string containing comma separated integers indicating ResNet '
           'block groups to apply DropBlock. `3,4` means to apply DropBlock to '
@@ -272,7 +272,7 @@ flags.DEFINE_float(
     help=('keep_prob parameter of DropBlock. Will not be used if '
           'dropblock_groups is empty.'))
 flags.DEFINE_integer(
-    'dropblock_size', default=3,
+    'dropblock_size', default=2,
     help=('size parameter of DropBlock. Will not be used if dropblock_groups '
           'is empty.'))
 
@@ -368,9 +368,9 @@ def resnet_model_fn(features, labels, mode, params):
   #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
   #features /= tf.constant(STDDEV_RGB, shape=[1, 1, 3], dtype=features.dtype)
 
-  # DropBlock keep_prob for the 4 block groups of ResNet architecture.
+  # DropBlock keep_prob for the 9 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
-  dropblock_keep_probs = [None] * 8
+  dropblock_keep_probs = [None] * 9
   if FLAGS.dropblock_groups:
     # Scheduled keep_prob for DropBlock.
     train_steps = tf.cast(FLAGS.train_steps, tf.float32)
@@ -381,13 +381,13 @@ def resnet_model_fn(features, labels, mode, params):
     # Computes DropBlock keep_prob for different block groups of ResNet.
     dropblock_groups = [int(x) for x in FLAGS.dropblock_groups.split(',')]
     for block_group in dropblock_groups:
-      if block_group < 1 or block_group > 8:
+      if block_group < 1 or block_group > 9:
         raise ValueError(
             'dropblock_groups should be a comma separated list of integers '
-            'between 1 and 4 (dropblcok_groups: {}).'
+            'between 1 and 9 (dropblcok_groups: {}).'
             .format(FLAGS.dropblock_groups))
       dropblock_keep_probs[block_group - 1] = 1 - (
-          (1 - dropblock_keep_prob) / 8.0**(8 - block_group))
+          (1 - dropblock_keep_prob) / 9.0**(9 - block_group))
 
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
