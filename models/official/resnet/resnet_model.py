@@ -31,7 +31,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 2048
+FILTER_COUNT= 256
 GROWTH_RATE = 64
 USE_DENSENET = False
 MAX_CASE = 10
@@ -327,8 +327,8 @@ def bottleneck_block(inputs, filters, is_training, strides,
   shortcut = inputs
   if use_projection:
     # Projection shortcut only in first block within a group. Bottleneck blocks
-    # end with 2 times the number of filters.
-    filters_out = 2 * filters
+    # end with 16 times the number of filters.
+    filters_out = 16 * filters
     inputs = conv2d_fixed_padding(
         inputs=inputs, filters=filters_out, kernel_size=[2 if inputs.shape[1]>=2 else inputs.shape[1],2 if inputs.shape[2]>=2 else inputs.shape[2]], strides=1,
         data_format=data_format)
@@ -358,7 +358,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=2 * filters, kernel_size=1, strides=1,
+      inputs=inputs, filters=16 * filters, kernel_size=1, strides=1,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
                            data_format=data_format)
@@ -443,7 +443,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if dropblock_keep_probs is not 'None' or a list with len 4.
   """
   if dropblock_keep_probs is None:
-    dropblock_keep_probs = [None] * 8
+    dropblock_keep_probs = [None] * 9
   if not isinstance(dropblock_keep_probs,
                     list) or len(dropblock_keep_probs) != 8:
     raise ValueError('dropblock_keep_probs is not valid:', dropblock_keep_probs)
@@ -468,6 +468,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           dropblock_size=dropblock_size)
         
     else:
+      '''
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
           inputs=inputs, filters=int(FILTER_COUNT/128), kernel_size=2, strides=1,
@@ -475,53 +476,58 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
-      
+      '''
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/128), block_fn=block_fn, blocks=layers[0],
+          inputs=inputs, filters=int(FILTER_COUNT/256), block_fn=block_fn, blocks=layers[0],
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[1],
+          inputs=inputs, filters=int(FILTER_COUNT/128), block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[2],
+          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[3],
+          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
       
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/8), block_fn=block_fn, blocks=layers[4],
+          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[4],
           strides=1, is_training=is_training, name='block_group5',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[4],
           dropblock_size=dropblock_size)
     
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[5],
+          inputs=inputs, filters=int(FILTER_COUNT/8), block_fn=block_fn, blocks=layers[5],
           strides=1, is_training=is_training, name='block_group6',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[5],
           dropblock_size=dropblock_size)
         
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[6],
+          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[6],
           strides=1, is_training=is_training, name='block_group7',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[6],
           dropblock_size=dropblock_size)
         
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[7],
+          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[7],
           strides=1, is_training=is_training, name='block_group8',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[7],
           dropblock_size=dropblock_size)
     
-      
+      inputs = block_group(
+          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[8],
+          strides=1, is_training=is_training, name='block_group9',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[8],
+          dropblock_size=dropblock_size)
+
     # The activation is 7x7 so this is a global average pool.
     # TODO(huangyp): reduce_mean will be faster.
     pool_size = (inputs.shape[1], inputs.shape[2])
@@ -531,10 +537,10 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_avg_pool')
     if not USE_DENSENET:
       inputs = tf.reshape(
-          inputs, [-1, FILTER_COUNT*2 if block_fn is bottleneck_block else FILTER_COUNT])
+          inputs, [-1, FILTER_COUNT*16 if block_fn is bottleneck_block else FILTER_COUNT])
     else:
       inputs = tf.reshape(
-          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*2 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
+          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*16 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
     
     outputarray = [tf.identity(tf.layers.dense(
         inputs=inputs,
@@ -557,6 +563,7 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
       #50: {'block': bottleneck_block, 'layers': [3, 4, 6, 3]},
       50: {'block': bottleneck_block, 'layers': [2, 2, 2, 2, 2, 2, 2, 2]},
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
+      118: {'block': bottleneck_block, 'layers': [4, 4, 4, 4, 4, 4, 4, 4, 4]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
       200: {'block': bottleneck_block, 'layers': [3, 24, 36, 3]},
       400: {'block': bottleneck_block, 'layers': [16, 16, 16, 16, 17, 17, 17, 17]},
