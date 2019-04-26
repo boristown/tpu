@@ -441,7 +441,7 @@ def resnet_model_fn(features, labels, mode, params):
       logits=logits[k],
       #onehot_labels=one_hot_labels,
       onehot_labels=labels[k],
-      label_smoothing=FLAGS.label_smoothing) / (k + 1.0) for k in range(MAX_CASE)]
+      label_smoothing=FLAGS.label_smoothing) / (1.0) for k in range(MAX_CASE)]
 
   # Add weight decay to the loss for non-batch-normalization variables.
   loss = sum(cross_entropy) + FLAGS.weight_decay * tf.add_n(
