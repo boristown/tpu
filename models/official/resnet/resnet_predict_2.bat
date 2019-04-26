@@ -7,7 +7,7 @@ python resnet_main.py ^
 --num_eval_images=529 ^
 --steps_per_eval=100 ^
 --iterations_per_loop=100 ^
---resnet_depth=118 ^
+--resnet_depth=50 ^
 --use_tpu=False ^
 --data_dir="G:\TPU\data" ^
 --prices_dir="G:\TPU\prices" ^

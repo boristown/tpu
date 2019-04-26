@@ -443,9 +443,9 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if dropblock_keep_probs is not 'None' or a list with len 4.
   """
   if dropblock_keep_probs is None:
-    dropblock_keep_probs = [None] * 9
+    dropblock_keep_probs = [None] * 8
   if not isinstance(dropblock_keep_probs,
-                    list) or len(dropblock_keep_probs) != 9:
+                    list) or len(dropblock_keep_probs) != 8:
     raise ValueError('dropblock_keep_probs is not valid:', dropblock_keep_probs)
 
   def model(inputs, is_training):
@@ -468,7 +468,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           dropblock_size=dropblock_size)
         
     else:
-      '''
+      
       inputs = conv2d_fixed_padding(
       #    inputs=inputs, filters=64, kernel_size=7, strides=CHANNEL_COUNT,
           inputs=inputs, filters=int(FILTER_COUNT/128), kernel_size=2, strides=1,
@@ -476,56 +476,50 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
-      '''
+      
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/256), block_fn=block_fn, blocks=layers[0],
+          inputs=inputs, filters=int(FILTER_COUNT/128), block_fn=block_fn, blocks=layers[0],
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/128), block_fn=block_fn, blocks=layers[1],
+          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/64), block_fn=block_fn, blocks=layers[2],
+          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/32), block_fn=block_fn, blocks=layers[3],
+          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
       
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/16), block_fn=block_fn, blocks=layers[4],
+          inputs=inputs, filters=int(FILTER_COUNT/8), block_fn=block_fn, blocks=layers[4],
           strides=1, is_training=is_training, name='block_group5',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[4],
           dropblock_size=dropblock_size)
     
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/8), block_fn=block_fn, blocks=layers[5],
+          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[5],
           strides=1, is_training=is_training, name='block_group6',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[5],
           dropblock_size=dropblock_size)
         
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/4), block_fn=block_fn, blocks=layers[6],
+          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[6],
           strides=1, is_training=is_training, name='block_group7',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[6],
           dropblock_size=dropblock_size)
         
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT/2), block_fn=block_fn, blocks=layers[7],
+          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[7],
           strides=1, is_training=is_training, name='block_group8',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[7],
-          dropblock_size=dropblock_size)
-    
-      inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[8],
-          strides=1, is_training=is_training, name='block_group9',
-          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[8],
           dropblock_size=dropblock_size)
 
     # The activation is 7x7 so this is a global average pool.
