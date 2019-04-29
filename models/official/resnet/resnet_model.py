@@ -517,7 +517,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           dropblock_size=dropblock_size)
         
       inputs = block_group(
-          inputs=inputs, filters=int(FILTER_COUNT), block_fn=block_fn, blocks=layers[7],
+          inputs=inputs, filters=int(FILTER_COUNT*4), block_fn=block_fn, blocks=layers[7],
           strides=1, is_training=is_training, name='block_group8',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[7],
           dropblock_size=dropblock_size)
@@ -531,10 +531,10 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_avg_pool')
     if not USE_DENSENET:
       inputs = tf.reshape(
-          inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
+          inputs, [-1, FILTER_COUNT*4*4 if block_fn is bottleneck_block else FILTER_COUNT*4])
     else:
       inputs = tf.reshape(
-          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
+          inputs, [-1, (FILTER_COUNT*4+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT*4+GROWTH_RATE*LAYERS_SUM)])
     
     outputarray = [tf.identity(tf.layers.dense(
         inputs=inputs,
