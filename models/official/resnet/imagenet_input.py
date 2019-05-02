@@ -176,11 +176,7 @@ class ImageNetTFExampleInput(object):
         operationDiv = tf.floordiv(operationDiv, 2)
         #op_list[i][1] = parsed['label']
         labels = tf.concat([operationMod, labels], 0)
-        tf.logging.info("labels=%s" % (labels.shape))
-        #for j in range(MAX_CASE-1-i):
-        #    operations[i][1] = tf.floordiv(operations[i][1], 2)
-        #operations[i][1] = tf.mod(operations[i][1], 2)
-        #operations[i][0] = tf.subtract(1, op_list[i][1])
+        #tf.logging.info("labels=%s" % (labels.shape))
     #operations = tf.cast(tf.stack(op_list), tf.int32)
     labels2 = tf.subtract(1, labels)
     labels = tf.concat([labels2, labels], 1)
