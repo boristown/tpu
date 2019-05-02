@@ -56,6 +56,7 @@ CHANNEL_COUNT = 1
 LABEL_COUNT = 2
 #PREDICT_BATCH_SIZE = 31
 MAX_CASE = 10
+GROUP_COUNT = 4
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
@@ -370,7 +371,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   # DropBlock keep_prob for the 8 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
-  dropblock_keep_probs = [None] * 8
+  dropblock_keep_probs = [None] * GROUP_COUNT
   if FLAGS.dropblock_groups:
     # Scheduled keep_prob for DropBlock.
     train_steps = tf.cast(FLAGS.train_steps, tf.float32)
@@ -381,13 +382,13 @@ def resnet_model_fn(features, labels, mode, params):
     # Computes DropBlock keep_prob for different block groups of ResNet.
     dropblock_groups = [int(x) for x in FLAGS.dropblock_groups.split(',')]
     for block_group in dropblock_groups:
-      if block_group < 1 or block_group > 8:
+      if block_group < 1 or block_group > GROUP_COUNT:
         raise ValueError(
             'dropblock_groups should be a comma separated list of integers '
-            'between 1 and 8 (dropblcok_groups: {}).'
+            'between 1 and GROUP_COUNT (dropblcok_groups: {}).'
             .format(FLAGS.dropblock_groups))
       dropblock_keep_probs[block_group - 1] = 1 - (
-          (1 - dropblock_keep_prob) / 8.0**(8 - block_group))
+          (1.0 - dropblock_keep_prob) / GROUP_COUNT**(GROUP_COUNT - block_group))
 
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
