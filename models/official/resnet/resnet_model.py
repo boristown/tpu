@@ -31,7 +31,7 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 256
+FILTER_COUNT= 1024
 GROWTH_RATE = 256
 USE_DENSENET = True
 MAX_CASE = 10
@@ -277,19 +277,19 @@ def residual_block(inputs, filters, is_training, strides,
   if use_projection:
     # Projection shortcut in first layer to match filters and strides
     inputs = conv2d_same_padding(
-        inputs=inputs, filters=filters, kernel_size=[10 if inputs.shape[1]>=10 else inputs.shape[1],10 if inputs.shape[2]>=10 else inputs.shape[2]], strides=1,
+        inputs=inputs, filters=filters, kernel_size=[3 if inputs.shape[1]>=3 else inputs.shape[1],3 if inputs.shape[2]>=3 else inputs.shape[2]], strides=1,
         data_format=data_format)
     shortcut = inputs
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
                                data_format=data_format)
 
   inputs = conv2d_same_padding(
-      inputs=inputs, filters=filters, kernel_size=10, strides=1,
+      inputs=inputs, filters=filters, kernel_size=3, strides=3,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
 
   inputs = conv2d_same_padding(
-      inputs=inputs, filters=filters, kernel_size=10, strides=1,
+      inputs=inputs, filters=filters, kernel_size=3, strides=3,
       data_format=data_format)
   inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
                            data_format=data_format)
@@ -456,7 +456,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if USE_DENSENET:
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = conv2d_same_padding(
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=10, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=5, strides=1,
           data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
