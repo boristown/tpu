@@ -399,14 +399,16 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
   """
   # Only the first block per block_group uses projection shortcut and strides.
   
-  inputs = block_fn(inputs, filters, is_training, strides,
-                    use_projection=True, data_format=data_format,
-                    dropblock_keep_prob=dropblock_keep_prob,
-                    dropblock_size=dropblock_size)
+  if not USE_DENSENET:
+    inputs = block_fn(inputs, filters, is_training, strides,
+                      use_projection=True, data_format=data_format,
+                      dropblock_keep_prob=dropblock_keep_prob,
+                      dropblock_size=dropblock_size)
   
-  tf.logging.info("inputs.shape=%s" % (inputs.shape))
-    
-  for _ in range(1, blocks):
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
+  
+  loop_blocks = blocks if USE_DENSENET else blocks - 1
+  for _ in range(0, loop_blocks):
   #for _ in range(0, blocks):
     inputs = block_fn(inputs, filters, is_training, 1,
                       data_format=data_format,
