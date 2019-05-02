@@ -412,7 +412,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
                       data_format=data_format,
                       dropblock_keep_prob=dropblock_keep_prob,
                       dropblock_size=dropblock_size)
-    #tf.logging.info("inputs.shape=%s" % (inputs.shape))
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
 
   return tf.identity(inputs, name)
 
