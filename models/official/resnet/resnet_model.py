@@ -31,8 +31,8 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 1024
-GROWTH_RATE = 128
+FILTER_COUNT= 100
+GROWTH_RATE = 25
 USE_DENSENET = True
 MAX_CASE = 10
 group_count = 4
@@ -331,7 +331,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
     # end with 4 times the number of filters.
     filters_out = 4 * filters
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=[2 if inputs.shape[1]>=2 else inputs.shape[1],2 if inputs.shape[2]>=2 else inputs.shape[2]], strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=[1 if inputs.shape[1]>=1 else inputs.shape[1],1 if inputs.shape[2]>=1 else inputs.shape[2]], strides=1,
         data_format=data_format)
     shortcut = inputs
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
@@ -349,7 +349,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
 
   inputs = conv2d_same_padding(
-      inputs=inputs, filters=filters, kernel_size=[3 if inputs.shape[1]>=3 else inputs.shape[1],3 if inputs.shape[2]>=3 else inputs.shape[2]], strides=1,
+      inputs=inputs, filters=filters, kernel_size=[1 if inputs.shape[1]>=1 else inputs.shape[1],1 if inputs.shape[2]>=1 else inputs.shape[2]], strides=1,
   #inputs = conv2d_fixed_padding(
   #    inputs=inputs, filters=filters, kernel_size=1, strides=1,
       data_format=data_format)
@@ -399,17 +399,17 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
   """
   # Only the first block per block_group uses projection shortcut and strides.
   
-  if not USE_DENSENET:
-    inputs = block_fn(inputs, filters, is_training, strides,
-                      use_projection=True, data_format=data_format,
-                      dropblock_keep_prob=dropblock_keep_prob,
-                      dropblock_size=dropblock_size)
+  #if not USE_DENSENET:
+  inputs = block_fn(inputs, filters, is_training, strides,
+                    use_projection=True, data_format=data_format,
+                    dropblock_keep_prob=dropblock_keep_prob,
+                    dropblock_size=dropblock_size)
   
-    tf.logging.info("inputs.shape=%s" % (inputs.shape))
+  tf.logging.info("inputs.shape=%s" % (inputs.shape))
   
-  loop_blocks = blocks if USE_DENSENET else blocks - 1
-  for _ in range(0, loop_blocks):
-  #for _ in range(0, blocks):
+  #loop_blocks = blocks if USE_DENSENET else blocks - 1
+  #for _ in range(0, loop_blocks):
+  for _ in range(1, blocks):
     inputs = block_fn(inputs, filters, is_training, 1,
                       data_format=data_format,
                       dropblock_keep_prob=dropblock_keep_prob,
@@ -465,9 +465,24 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = block_group(
-          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=LAYERS_SUM,
-          strides=1, is_training=is_training, name='block_groups',
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[0],
+          strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
+          dropblock_size=dropblock_size)
+      inputs = block_group(
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[1],
+          strides=1, is_training=is_training, name='block_group2',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
+          dropblock_size=dropblock_size)
+      inputs = block_group(
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[2],
+          strides=1, is_training=is_training, name='block_group3',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
+          dropblock_size=dropblock_size)
+      inputs = block_group(
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[3],
+          strides=1, is_training=is_training, name='block_group4',
+          data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
         
     else:
@@ -535,10 +550,12 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     inputs = tf.identity(inputs, 'final_avg_pool')
     if not USE_DENSENET:
       inputs = tf.reshape(
-          inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
+          #inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
+          inputs, [-1, int(inputs.shape[3]])
     else:
       inputs = tf.reshape(
-          inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
+          #inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
+          inputs, [-1, int(inputs.shape[3]])
     
     outputarray = [tf.identity(tf.layers.dense(
         inputs=inputs,
