@@ -551,11 +551,11 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if not USE_DENSENET:
       inputs = tf.reshape(
           #inputs, [-1, FILTER_COUNT*4 if block_fn is bottleneck_block else FILTER_COUNT])
-          inputs, [-1, int(inputs.shape[3]])
+          inputs, [-1, int(inputs.shape[3])])
     else:
       inputs = tf.reshape(
           #inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
-          inputs, [-1, int(inputs.shape[3]])
+          inputs, [-1, int(inputs.shape[3])])
     
     outputarray = [tf.identity(tf.layers.dense(
         inputs=inputs,
