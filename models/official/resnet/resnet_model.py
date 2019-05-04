@@ -465,10 +465,11 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = block_group(
-          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[0],
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=LAYERS_SUM,
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
+    '''
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
@@ -484,6 +485,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
+      '''
         
     else:
       
