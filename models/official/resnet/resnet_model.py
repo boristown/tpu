@@ -31,11 +31,12 @@ PRICE_COUNT = 10
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
-FILTER_COUNT= 100
-GROWTH_RATE = 25
+FILTER_COUNT= 16
+GROWTH_RATE = 32
 USE_DENSENET = True
 MAX_CASE = 10
 group_count = 4
+DENSE_REDUCTION = 0.5
 
 def batch_norm_relu(inputs, is_training, relu=True, init_zero=False,
                     data_format='channels_first'):
@@ -329,9 +330,12 @@ def bottleneck_block(inputs, filters, is_training, strides,
   if use_projection:
     # Projection shortcut only in first block within a group. Bottleneck blocks
     # end with 4 times the number of filters.
-    filters_out = 4 * filters
+    if USE_DENSENET:
+        filters_out = int(inputs.shape[3] * DENSE_REDUCTION)
+    else:
+        filters_out = 4 * filters
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=[1 if inputs.shape[1]>=1 else inputs.shape[1],1 if inputs.shape[2]>=1 else inputs.shape[2]], strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=1, strides=1,
         data_format=data_format)
     shortcut = inputs
     shortcut = batch_norm_relu(shortcut, is_training, relu=False,
@@ -339,33 +343,45 @@ def bottleneck_block(inputs, filters, is_training, strides,
   shortcut = dropblock(
       shortcut, is_training=is_training, data_format=data_format,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
-
-  inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=filters, kernel_size=1, strides=1,
-      data_format=data_format)
+  
+  if not USE_DENSENET or not use_projection:
+    if USE_DENSENET:
+      inputs = conv2d_fixed_padding(
+          inputs=inputs, filters=filters*4, kernel_size=1, strides=1,
+          data_format=data_format)
+    else:
+      inputs = conv2d_fixed_padding(
+          inputs=inputs, filters=filters, kernel_size=1, strides=1,
+          data_format=data_format)
+    inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
+    inputs = dropblock(
+        inputs, is_training=is_training, data_format=data_format,
+        keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
+    
+  if use_projection:
+    inputs = conv2d_fixed_padding(
+        inputs=inputs, filters=filters_out, kernel_size=3, strides=1,
+        data_format=data_format)
+  else:
+    inputs = conv2d_same_padding(
+        inputs=inputs, filters=filters, kernel_size=3, strides=1,
+        data_format=data_format)
+    
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
   inputs = dropblock(
       inputs, is_training=is_training, data_format=data_format,
       keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
-
-  inputs = conv2d_same_padding(
-      inputs=inputs, filters=filters, kernel_size=[1 if inputs.shape[1]>=1 else inputs.shape[1],1 if inputs.shape[2]>=1 else inputs.shape[2]], strides=1,
-  #inputs = conv2d_fixed_padding(
-  #    inputs=inputs, filters=filters, kernel_size=1, strides=1,
-      data_format=data_format)
-  inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
-  inputs = dropblock(
-      inputs, is_training=is_training, data_format=data_format,
-      keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
-
-  inputs = conv2d_fixed_padding(
-      inputs=inputs, filters=4 * filters, kernel_size=1, strides=1,
-      data_format=data_format)
-  inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
-                           data_format=data_format)
-  inputs = dropblock(
-      inputs, is_training=is_training, data_format=data_format,
-      keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
+  if use_projection:
+    return inputs
+  if not USE_DENSENET:
+    inputs = conv2d_fixed_padding(
+        inputs=inputs, filters=4 * filters, kernel_size=1, strides=1,
+        data_format=data_format)
+    inputs = batch_norm_relu(inputs, is_training, relu=False, init_zero=True,
+                             data_format=data_format)
+    inputs = dropblock(
+        inputs, is_training=is_training, data_format=data_format,
+        keep_prob=dropblock_keep_prob, dropblock_size=dropblock_size)
     
   if USE_DENSENET:
     return tf.concat([inputs, shortcut], axis=3)
@@ -401,7 +417,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
   
   #if not USE_DENSENET:
   inputs = block_fn(inputs, filters, is_training, strides,
-                    use_projection=True, data_format=data_format,
+                    use_projection=True if name!="block_group1" else False, data_format=data_format,
                     dropblock_keep_prob=dropblock_keep_prob,
                     dropblock_size=dropblock_size)
   
@@ -458,18 +474,18 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     if USE_DENSENET:
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = conv2d_fixed_padding(
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=10, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
           data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = block_group(
-          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=LAYERS_SUM,
+          inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[0],
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
-      '''
+      
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
@@ -485,7 +501,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
-      '''
+      
     else:
       
       inputs = conv2d_same_padding(
@@ -579,7 +595,7 @@ def resnet_v1(resnet_depth, num_classes, data_format='channels_first',
       #50: {'block': bottleneck_block, 'layers': [3, 4, 6, 3]},
       50: {'block': bottleneck_block, 'layers': [2, 2, 2, 2, 2, 2, 2, 2]},
       101: {'block': bottleneck_block, 'layers': [3, 4, 23, 3]},
-      122: {'block': bottleneck_block, 'layers': [3, 8, 26, 3]},
+      121: {'block': bottleneck_block, 'layers': [6, 12, 24, 16]},
       152: {'block': bottleneck_block, 'layers': [3, 8, 36, 3]},
       200: {'block': bottleneck_block, 'layers': [3, 24, 36, 3]},
       400: {'block': bottleneck_block, 'layers': [16, 16, 16, 16, 17, 17, 17, 17]},
