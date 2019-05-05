@@ -331,7 +331,7 @@ def bottleneck_block(inputs, filters, is_training, strides,
     # Projection shortcut only in first block within a group. Bottleneck blocks
     # end with 4 times the number of filters.
     if USE_DENSENET:
-        filters_out = int(inputs.shape[3] * DENSE_REDUCTION)
+        filters_out = int(int(inputs.shape[3]) * DENSE_REDUCTION)
     else:
         filters_out = 4 * filters
     inputs = conv2d_fixed_padding(
