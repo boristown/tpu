@@ -29,7 +29,7 @@ import numpy as np
 
 PRICE_COUNT = 10
 DIMENSION_COUNT = 10
-CHANNEL_COUNT = 1
+CHANNEL_COUNT = 2
 LABEL_COUNT = 2
 TEST_CASE = 1
 MAX_CASE = 10
@@ -149,7 +149,7 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     keys_to_features = {
-        'prices' : tf.FixedLenFeature([100], tf.float32, default_value=[0.0]*100),
+        'prices' : tf.FixedLenFeature([PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT], tf.float32, default_value=[0.0]*(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)),
         'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
 
