@@ -427,7 +427,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
   def dataset_predict_parser(self, value):
     """See base class."""
-    assert len(self.predict_dir) > 0
+    assert len(self.predict_dir) > 0 
     if not self.predict_dir:
       return value
     return super(ImageNetInput, self).dataset_predict_parser(value)
