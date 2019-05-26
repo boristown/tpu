@@ -455,7 +455,7 @@ class ImageNetInput(ImageNetTFExampleInput):
     def fetch_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
       tf.logging.info("filename.shape = %s" % (filename.shape))
-      buffer_size = 32 * 1024 * 1024  # 32 MiB per file
+      buffer_size = 16 * 1024 * 1024  # 32 MiB per file
       dataset = tf.data.TFRecordDataset(filename, compression_type="ZLIB", buffer_size=buffer_size)
       #dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       return dataset
@@ -467,7 +467,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     if self.cache:
       dataset = dataset.cache().apply(
-          tf.contrib.data.shuffle_and_repeat(1024 * 32))
+          tf.contrib.data.shuffle_and_repeat(1024 * 16))
     else:
       dataset = dataset.shuffle(1024)
     return dataset
@@ -497,7 +497,7 @@ class ImageNetInput(ImageNetTFExampleInput):
     def fetch_predict_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
       tf.logging.info("filename.shape = %s" % (filename.shape))
-      buffer_size = 32 * 1024 * 1024  # 32 MiB per file
+      buffer_size = 16 * 1024 * 1024  # 32 MiB per file
       predict_dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       #tf.logging.info("predict_dataset1 = %s" % predict_dataset.shapes)
       return predict_dataset
