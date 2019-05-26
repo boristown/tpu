@@ -458,6 +458,7 @@ class ImageNetInput(ImageNetTFExampleInput):
       buffer_size = 8 * 1024 * 1024  # 8 MiB per file
       dataset = tf.data.TFRecordDataset(filename, compression_type="ZLIB", buffer_size=buffer_size)
       #dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
+      tf.logging.info(filename)
       return dataset
 
     # Read the data from disk in parallel
