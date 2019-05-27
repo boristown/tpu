@@ -466,13 +466,14 @@ class ImageNetInput(ImageNetTFExampleInput):
         tf.contrib.data.parallel_interleave(
             fetch_dataset, cycle_length=64, sloppy=True))
     
-    '''
+    dataset = dataset.apply(tf.data.experimental.ignore_errors())
+    
     if self.cache:
       dataset = dataset.cache().apply(
           tf.contrib.data.shuffle_and_repeat(1024 * 8))
     else:
       dataset = dataset.shuffle(1024)
-    '''
+    
     
     return dataset
 
