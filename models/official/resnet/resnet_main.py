@@ -818,6 +818,7 @@ def main(unused_argv):
           with open(price_file_item,"r") as fcsv:
             csvreader = csv.reader(fcsv,delimiter = ",")
             price_batch_size = len(list(csvreader))
+            
           # price_batch_size = PREDICT_BATCH_SIZE
           
           if price_batch_size == 0:
