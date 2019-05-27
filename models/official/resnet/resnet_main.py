@@ -56,6 +56,7 @@ CHANNEL_COUNT = 1
 LABEL_COUNT = 2
 #PREDICT_BATCH_SIZE = 31
 MAX_CASE = 10
+GROUP_COUNT = 4
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
@@ -262,17 +263,17 @@ flags.DEFINE_integer('image_size', 4, 'The input image size.')
 
 flags.DEFINE_string(
     #'dropblock_groups', '6,7,8,9',
-    'dropblock_groups', '',
+    'dropblock_groups', '8',
     help=('A string containing comma separated integers indicating ResNet '
           'block groups to apply DropBlock. `3,4` means to apply DropBlock to '
           'block groups 3 and 4. Use an empty string to not apply DropBlock to '
           'any block group.'))
 flags.DEFINE_float(
-    'dropblock_keep_prob', default=0.9,
+    'dropblock_keep_prob', default=0.8,
     help=('keep_prob parameter of DropBlock. Will not be used if '
           'dropblock_groups is empty.'))
 flags.DEFINE_integer(
-    'dropblock_size', default=2,
+    'dropblock_size', default=1,
     help=('size parameter of DropBlock. Will not be used if dropblock_groups '
           'is empty.'))
 
@@ -370,7 +371,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   # DropBlock keep_prob for the 8 block groups of ResNet architecture.
   # None means applying no DropBlock at the corresponding block group.
-  dropblock_keep_probs = [None] * 8
+  dropblock_keep_probs = [None] * GROUP_COUNT
   if FLAGS.dropblock_groups:
     # Scheduled keep_prob for DropBlock.
     train_steps = tf.cast(FLAGS.train_steps, tf.float32)
@@ -381,13 +382,13 @@ def resnet_model_fn(features, labels, mode, params):
     # Computes DropBlock keep_prob for different block groups of ResNet.
     dropblock_groups = [int(x) for x in FLAGS.dropblock_groups.split(',')]
     for block_group in dropblock_groups:
-      if block_group < 1 or block_group > 8:
+      if block_group < 1 or block_group > GROUP_COUNT:
         raise ValueError(
             'dropblock_groups should be a comma separated list of integers '
-            'between 1 and 8 (dropblcok_groups: {}).'
+            'between 1 and GROUP_COUNT (dropblcok_groups: {}).'
             .format(FLAGS.dropblock_groups))
       dropblock_keep_probs[block_group - 1] = 1 - (
-          (1 - dropblock_keep_prob) / 8.0**(8 - block_group))
+          (1.0 - dropblock_keep_prob) / GROUP_COUNT**(GROUP_COUNT - block_group))
 
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
@@ -558,24 +559,23 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-      predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
-      
+        
+      k = 0
+      #predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
+      prediction1 = tf.argmax(logits[k], axis=1) 
       #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
+      '''
       top_accuracys = [tf.metrics.mean(
           tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
+      '''
       
+      top_accuracy1 = tf.metrics.mean(
+          tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
+          prediction1, 1), tf.float32))
+    
       return {
-          '1Day_Accuracy': top_accuracys[0],
-          '2Days_Accuracy': top_accuracys[1],
-          '3Days_Accuracy': top_accuracys[2],
-          '4Days_Accuracy': top_accuracys[3],
-          '5Days_Accuracy': top_accuracys[4],
-          '6Days_Accuracy': top_accuracys[5],
-          '7Days_Accuracy': top_accuracys[6],
-          '8Days_Accuracy': top_accuracys[7],
-          '9Days_Accuracy': top_accuracys[8],
-          '10Days_Accuracy': top_accuracys[9],
+          '1Day_Accuracy': top_accuracy1
       }
 
     eval_metrics = (metric_fn, [labels, logits])

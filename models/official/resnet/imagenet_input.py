@@ -149,7 +149,7 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     keys_to_features = {
-        'prices' : tf.FixedLenFeature([100], tf.float32, default_value=[0.0]*100),
+        'prices' : tf.FixedLenFeature([PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT], tf.float32, default_value=[0.0]*(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)),
         'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
 
@@ -176,11 +176,7 @@ class ImageNetTFExampleInput(object):
         operationDiv = tf.floordiv(operationDiv, 2)
         #op_list[i][1] = parsed['label']
         labels = tf.concat([operationMod, labels], 0)
-        tf.logging.info("labels=%s" % (labels.shape))
-        #for j in range(MAX_CASE-1-i):
-        #    operations[i][1] = tf.floordiv(operations[i][1], 2)
-        #operations[i][1] = tf.mod(operations[i][1], 2)
-        #operations[i][0] = tf.subtract(1, op_list[i][1])
+        #tf.logging.info("labels=%s" % (labels.shape))
     #operations = tf.cast(tf.stack(op_list), tf.int32)
     labels2 = tf.subtract(1, labels)
     labels = tf.concat([labels2, labels], 1)
@@ -431,7 +427,7 @@ class ImageNetInput(ImageNetTFExampleInput):
 
   def dataset_predict_parser(self, value):
     """See base class."""
-    assert len(self.predict_dir) > 0
+    assert len(self.predict_dir) > 0 
     if not self.predict_dir:
       return value
     return super(ImageNetInput, self).dataset_predict_parser(value)
@@ -459,21 +455,26 @@ class ImageNetInput(ImageNetTFExampleInput):
     def fetch_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
       tf.logging.info("filename.shape = %s" % (filename.shape))
-      buffer_size = 16 * 1024 * 1024  # 16 MiB per file
+      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
       dataset = tf.data.TFRecordDataset(filename, compression_type="ZLIB", buffer_size=buffer_size)
       #dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
+      tf.logging.info(filename)
       return dataset
 
     # Read the data from disk in parallel
     dataset = dataset.apply(
         tf.contrib.data.parallel_interleave(
             fetch_dataset, cycle_length=64, sloppy=True))
-
+    
+    dataset = dataset.apply(tf.data.experimental.ignore_errors())
+    
     if self.cache:
       dataset = dataset.cache().apply(
-          tf.contrib.data.shuffle_and_repeat(1024 * 16))
+          tf.contrib.data.shuffle_and_repeat(1024 * 8))
     else:
       dataset = dataset.shuffle(1024)
+    
+    
     return dataset
 
   def make_predict_dataset(self, index, num_hosts, filepattern):
@@ -501,7 +502,7 @@ class ImageNetInput(ImageNetTFExampleInput):
     def fetch_predict_dataset(filename):
       #raise Exception(f'fetch_dataset {filename} in class ImageNetInput')
       tf.logging.info("filename.shape = %s" % (filename.shape))
-      buffer_size = 8 * 1024 * 1024  # 8 MiB per file
+      buffer_size = 8 * 1024 * 1024  # 32 MiB per file
       predict_dataset = tf.data.TextLineDataset(filename, buffer_size=buffer_size)
       #tf.logging.info("predict_dataset1 = %s" % predict_dataset.shapes)
       return predict_dataset
