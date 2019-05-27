@@ -559,15 +559,23 @@ def resnet_model_fn(features, labels, mode, params):
         A dict of the metrics to return from evaluation.
       """
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-      predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
-      
+        
+      k = 0
+      #predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
+      prediction1 = tf.argmax(logits[k], axis=1) 
       #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
+      '''
       top_accuracys = [tf.metrics.mean(
           tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
+      '''
       
+      top_accuracy1 = tf.metrics.mean(
+          tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
+          prediction1, 1), tf.float32))
       return {
-          '1Day_Accuracy': top_accuracys[0],
+          '1Day_Accuracy': top_accuracys1,
+          '''
           '2Days_Accuracy': top_accuracys[1],
           '3Days_Accuracy': top_accuracys[2],
           '4Days_Accuracy': top_accuracys[3],
@@ -577,6 +585,7 @@ def resnet_model_fn(features, labels, mode, params):
           '8Days_Accuracy': top_accuracys[7],
           '9Days_Accuracy': top_accuracys[8],
           '10Days_Accuracy': top_accuracys[9],
+          '''
       }
 
     eval_metrics = (metric_fn, [labels, logits])
