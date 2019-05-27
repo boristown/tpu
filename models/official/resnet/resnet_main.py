@@ -577,17 +577,6 @@ def resnet_model_fn(features, labels, mode, params):
       return {
           '1Day_Accuracy': top_accuracy1
       }
-          '''
-          '2Days_Accuracy': top_accuracys[1],
-          '3Days_Accuracy': top_accuracys[2],
-          '4Days_Accuracy': top_accuracys[3],
-          '5Days_Accuracy': top_accuracys[4],
-          '6Days_Accuracy': top_accuracys[5],
-          '7Days_Accuracy': top_accuracys[6],
-          '8Days_Accuracy': top_accuracys[7],
-          '9Days_Accuracy': top_accuracys[8],
-          '10Days_Accuracy': top_accuracys[9],
-          '''
 
     eval_metrics = (metric_fn, [labels, logits])
 
