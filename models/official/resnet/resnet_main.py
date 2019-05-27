@@ -574,7 +574,7 @@ def resnet_model_fn(features, labels, mode, params):
           tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           prediction1, 1), tf.float32))
       return {
-          '1Day_Accuracy': top_accuracys1,
+          '1Day_Accuracy': top_accuracy1,
           '''
           '2Days_Accuracy': top_accuracys[1],
           '3Days_Accuracy': top_accuracys[2],
