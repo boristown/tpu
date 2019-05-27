@@ -465,12 +465,15 @@ class ImageNetInput(ImageNetTFExampleInput):
     dataset = dataset.apply(
         tf.contrib.data.parallel_interleave(
             fetch_dataset, cycle_length=64, sloppy=True))
-
+    
+    '''
     if self.cache:
       dataset = dataset.cache().apply(
           tf.contrib.data.shuffle_and_repeat(1024 * 8))
     else:
       dataset = dataset.shuffle(1024)
+    '''
+    
     return dataset
 
   def make_predict_dataset(self, index, num_hosts, filepattern):
