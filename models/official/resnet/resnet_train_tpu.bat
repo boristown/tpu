@@ -6,7 +6,7 @@ python resnet_main.py \
 --num_eval_images=127306 \
 --steps_per_eval=100 \
 --iterations_per_loop=100 \
---resnet_depth=50 \
+--resnet_depth=169 \
 --use_tpu=Ture \
 --data_dir=${STORAGE_BUCKET}/data \
 --model_dir=${STORAGE_BUCKET}/resnet \
