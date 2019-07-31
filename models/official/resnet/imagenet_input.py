@@ -27,7 +27,7 @@ import numpy as np
 # from official.resnet import resnet_preprocessing
 #import resnet_preprocessing
 
-PRICE_COUNT = 10
+PRICE_COUNT = 12
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
