@@ -6,7 +6,7 @@ python resnet_main.py ^
 --num_eval_images=127306 ^
 --steps_per_eval=5 ^
 --iterations_per_loop=5 ^
---resnet_depth=50 ^
+--resnet_depth=169 ^
 --use_tpu=False ^
 --data_dir="C:\TPU\data" ^
 --model_dir="C:\TPU\model" ^
