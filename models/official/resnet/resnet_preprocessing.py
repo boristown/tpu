@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-PRICE_COUNT = 10
+PRICE_COUNT = 12
 DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
