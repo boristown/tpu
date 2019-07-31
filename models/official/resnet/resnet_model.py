@@ -473,9 +473,11 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     LAYERS_SUM = sum(layers)
     if USE_DENSENET:
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
+      #shape = 12 * 10 * 1
       inputs = conv2d_fixed_padding(
           inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
           data_format=data_format)
+      #shape = 11 * 9 * 32
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
