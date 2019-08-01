@@ -360,11 +360,11 @@ def bottleneck_block(inputs, filters, is_training, strides,
     
   if use_projection:
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=3, strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=3 if inputs.shape[2]>=3 else inputs.shape[2], strides=1,
         data_format=data_format)
   else:
     inputs = conv2d_same_padding(
-        inputs=inputs, filters=filters, kernel_size=3, strides=1,
+        inputs=inputs, filters=filters, kernel_size=3 if inputs.shape[2]>=3 else inputs.shape[2], strides=1,
         data_format=data_format)
     
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
@@ -475,9 +475,9 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       #shape = 12 * 10
       inputs = conv2d_fixed_padding(
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=3, strides=1,
           data_format=data_format)
-      #shape = 11 * 9
+      #shape = 10 * 8
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
@@ -487,25 +487,25 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
-      #shape = 9 * 7
+      #shape = 8 * 6
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
-      #shape = 7 * 5
+      #shape = 6 * 4
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
-      #shape = 5 * 3
+      #shape = 4 * 2
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
-      #shape = 3 * 1
+      #shape = 2 * 1
     else:
       
       inputs = conv2d_same_padding(
