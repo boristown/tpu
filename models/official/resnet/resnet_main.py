@@ -402,14 +402,14 @@ def resnet_model_fn(features, labels, mode, params):
     return network(
         inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
 
+  #执行算命猫的本次训练 20190802
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
       logits = build_network()
     logits = tf.cast(logits, tf.float32)
   elif FLAGS.precision == 'float32':
     logits = build_network()
-  #tf.logging.info("features=%s,labels=%s,logits=%s" % (features.shape, labels.shape, logits.shape))
-  #logits = tf.transpose(logits, [1, 0, 2])  # NCL to CNL
+    
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
         'classes': tf.argmax(logits, axis=2),
@@ -438,6 +438,7 @@ def resnet_model_fn(features, labels, mode, params):
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   #one_hot_labels = labels_reshaped
 
+  #对比算命猫训练的输出结果Losits与正确标签Labels
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
       #onehot_labels=one_hot_labels,
