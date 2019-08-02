@@ -472,6 +472,7 @@ def resnet_model_fn(features, labels, mode, params):
     '''
     # I think Adam optimizer is better than LARS/Momentum optimizer for sole trader
     # Boris Town 20190207
+    # 算命猫使用了Adam优化器 20190802
     optimizer = tf.train.AdamOptimizer()
     if FLAGS.use_tpu:
       # When using TPU, wrap the optimizer with CrossShardOptimizer which
