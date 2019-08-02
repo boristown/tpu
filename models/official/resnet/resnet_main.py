@@ -590,6 +590,269 @@ def resnet_model_fn(features, labels, mode, params):
       eval_metrics=eval_metrics)
 
 
+def densenet_model_fn(features, labels, mode, params):
+  """The model_fn for ResNet to be used with TPUEstimator.
+
+  Args:
+    features: `Tensor` of batched images. If transpose_input is enabled, it
+        is transposed to device layout and reshaped to 1D tensor.
+    labels: `Tensor` of labels for the data samples
+    mode: one of `tf.estimator.ModeKeys.{TRAIN,EVAL,PREDICT}`
+    params: `dict` of parameters passed to the model from the TPUEstimator,
+        `params['batch_size']` is always provided and should be used as the
+        effective batch size.
+
+  Returns:
+    A `TPUEstimatorSpec` for the model
+  """
+  if isinstance(features, dict):
+    features = features['feature']
+
+  # In most cases, the default data format NCHW instead of NHWC should be
+  # used for a significant performance boost on GPU/TPU. NHWC should be used
+  # only if the network needs to be run on CPU since the pooling operations
+  # are only supported on NHWC.
+  if FLAGS.data_format == 'channels_first':
+    assert not FLAGS.transpose_input    # channels_first only for GPU
+    features = tf.transpose(features, [0, 3, 1, 2])
+
+  #if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
+  if FLAGS.transpose_input:
+    #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
+    #image_size = FLAGS.image_size
+    #features = tf.reshape(features, [image_size, image_size, 3, -1])
+    features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
+    features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
+    if mode != tf.estimator.ModeKeys.PREDICT:
+      labels = tf.reshape(labels, [MAX_CASE, FLAGS.num_label_classes, -1])
+      labels = tf.transpose(labels, [0, 2, 1])  # CLN to CNL
+      tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
+    
+
+  # Normalize the image to zero mean and unit variance.
+  #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
+  #features /= tf.constant(STDDEV_RGB, shape=[1, 1, 3], dtype=features.dtype)
+
+  # DropBlock keep_prob for the 8 block groups of ResNet architecture.
+  # None means applying no DropBlock at the corresponding block group.
+  dropblock_keep_probs = [None] * GROUP_COUNT
+  if FLAGS.dropblock_groups:
+    # Scheduled keep_prob for DropBlock.
+    train_steps = tf.cast(FLAGS.train_steps, tf.float32)
+    current_step = tf.cast(tf.train.get_global_step(), tf.float32)
+    current_ratio = current_step / train_steps
+    dropblock_keep_prob = (1 - current_ratio * (1 - FLAGS.dropblock_keep_prob))
+
+    # Computes DropBlock keep_prob for different block groups of ResNet.
+    dropblock_groups = [int(x) for x in FLAGS.dropblock_groups.split(',')]
+    for block_group in dropblock_groups:
+      if block_group < 1 or block_group > GROUP_COUNT:
+        raise ValueError(
+            'dropblock_groups should be a comma separated list of integers '
+            'between 1 and GROUP_COUNT (dropblcok_groups: {}).'
+            .format(FLAGS.dropblock_groups))
+      dropblock_keep_probs[block_group - 1] = 1 - (
+          (1.0 - dropblock_keep_prob) / GROUP_COUNT**(GROUP_COUNT - block_group))
+
+  # This nested function allows us to avoid duplicating the logic which
+  # builds the network, for different values of --precision.
+  def build_network():
+    network = resnet_model.resnet_v1(
+        resnet_depth=FLAGS.resnet_depth,
+        num_classes=FLAGS.num_label_classes,
+        dropblock_size=FLAGS.dropblock_size,
+        dropblock_keep_probs=dropblock_keep_probs,
+        data_format=FLAGS.data_format)
+    return network(
+        inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+
+  #执行算命猫的本次训练 20190802
+  if FLAGS.precision == 'bfloat16':
+    with tf.contrib.tpu.bfloat16_scope():
+      logits = build_network()
+    logits = tf.cast(logits, tf.float32)
+  elif FLAGS.precision == 'float32':
+    logits = build_network()
+    
+  if mode == tf.estimator.ModeKeys.PREDICT:
+    predictions = {
+        'classes': tf.argmax(logits, axis=2),
+        'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
+        }
+    
+    tf.logging.info("classes=%s" % (tf.argmax(logits, axis=2)))
+    tf.logging.info("probabilities=%s" % (predictions['probabilities']))
+    
+    return tf.estimator.EstimatorSpec(
+        mode=mode,
+        predictions=predictions,
+        export_outputs={
+            'classify': tf.estimator.export.PredictOutput(predictions)
+        })
+
+  # If necessary, in the model_fn, use params['batch_size'] instead the batch
+  # size flags (--train_batch_size or --eval_batch_size).
+  batch_size = params['batch_size']   # pylint: disable=unused-variable
+
+  #labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
+  #labels_reshaped = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
+  
+  # Calculate loss, which includes softmax cross entropy and L2 regularization.
+  #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
+  #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
+  #one_hot_labels = labels_reshaped
+
+  #对比算命猫训练的输出结果Losits与正确标签Labels
+  cross_entropy = [tf.losses.softmax_cross_entropy(
+      logits=logits[k],
+      #onehot_labels=one_hot_labels,
+      onehot_labels=labels[k],
+      label_smoothing=FLAGS.label_smoothing) / (k+1.0) for k in range(MAX_CASE)]
+
+  # Add weight decay to the loss for non-batch-normalization variables.
+  loss = sum(cross_entropy) + FLAGS.weight_decay * tf.add_n(
+      [tf.nn.l2_loss(v) for v in tf.trainable_variables()
+       if 'batch_normalization' not in v.name])
+
+  host_call = None
+  if mode == tf.estimator.ModeKeys.TRAIN:
+    # Compute the current epoch and associated learning rate from global_step.
+    global_step = tf.train.get_global_step()
+    steps_per_epoch = FLAGS.num_train_images / FLAGS.train_batch_size
+    current_epoch = (tf.cast(global_step, tf.float32) /
+                     steps_per_epoch)
+    
+    '''
+    # LARS is a large batch optimizer. LARS enables higher accuracy at batch 16K
+    # and larger batch sizes.
+    if FLAGS.train_batch_size >= 16384 and FLAGS.enable_lars:
+      learning_rate = 0.0
+      optimizer = lars_util.init_lars_optimizer(current_epoch)
+    else:
+      learning_rate = learning_rate_schedule(FLAGS.train_steps, current_epoch)
+      optimizer = tf.train.MomentumOptimizer(
+          learning_rate=learning_rate,
+          momentum=FLAGS.momentum,
+          use_nesterov=True)
+    '''
+    # I think Adam optimizer is better than LARS/Momentum optimizer for sole trader
+    # Boris Town 20190207
+    # 算命猫使用了Adam优化器 20190802
+    optimizer = tf.train.AdamOptimizer()
+    if FLAGS.use_tpu:
+      # When using TPU, wrap the optimizer with CrossShardOptimizer which
+      # handles synchronization details between different TPU cores. To the
+      # user, this should look like regular synchronous training.
+      optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
+
+    # Batch normalization requires UPDATE_OPS to be added as a dependency to
+    # the train operation.
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+      train_op = optimizer.minimize(loss, global_step)
+
+    if not FLAGS.skip_host_call:
+      def host_call_fn(gs, loss):
+        """Training host call. Creates scalar summaries for training metrics.
+
+        This function is executed on the CPU and should not directly reference
+        any Tensors in the rest of the `model_fn`. To pass Tensors from the
+        model to the `metric_fn`, provide as part of the `host_call`. See
+        https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
+        for more information.
+
+        Arguments should match the list of `Tensor` objects passed as the second
+        element in the tuple passed to `host_call`.
+
+        Args:
+          gs: `Tensor with shape `[batch]` for the global_step
+          loss: `Tensor` with shape `[batch]` for the training loss.
+          lr: `Tensor` with shape `[batch]` for the learning_rate.
+          ce: `Tensor` with shape `[batch]` for the current_epoch.
+
+        Returns:
+          List of summary ops to run on the CPU host.
+        """
+        gs = gs[0]
+        # Host call fns are executed FLAGS.iterations_per_loop times after one
+        # TPU loop is finished, setting max_queue value to the same as number of
+        # iterations will make the summary writer only flush the data to storage
+        # once per loop.
+        with summary.create_file_writer(
+            FLAGS.model_dir, max_queue=FLAGS.iterations_per_loop).as_default():
+          with summary.always_record_summaries():
+            summary.scalar('loss', loss[0], step=gs)
+            #summary.scalar('learning_rate', lr[0], step=gs)
+            #summary.scalar('current_epoch', ce[0], step=gs)
+
+            return summary.all_summary_ops()
+
+      # To log the loss, current learning rate, and epoch for Tensorboard, the
+      # summary op needs to be run on the host CPU via host_call. host_call
+      # expects [batch_size, ...] Tensors, thus reshape to introduce a batch
+      # dimension. These Tensors are implicitly concatenated to
+      # [params['batch_size']].
+      #learning_rate = 0.0
+      gs_t = tf.reshape(global_step, [1])
+      loss_t = tf.reshape(loss, [1])
+      #lr_t = tf.reshape(learning_rate, [1])
+      #ce_t = tf.reshape(current_epoch, [1])
+
+      host_call = (host_call_fn, [gs_t, loss_t])
+
+  else:
+    train_op = None
+
+  eval_metrics = None
+  if mode == tf.estimator.ModeKeys.EVAL:
+    def metric_fn(labels, logits):
+      """Evaluation metric function. Evaluates accuracy.
+
+      This function is executed on the CPU and should not directly reference
+      any Tensors in the rest of the `model_fn`. To pass Tensors from the model
+      to the `metric_fn`, provide as part of the `eval_metrics`. See
+      https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
+      for more information.
+
+      Arguments should match the list of `Tensor` objects passed as the second
+      element in the tuple passed to `eval_metrics`.
+
+      Args:
+        labels: `Tensor` with shape `[batch]`.
+        logits: `Tensor` with shape `[batch, num_classes]`.
+
+      Returns:
+        A dict of the metrics to return from evaluation.
+      """
+      # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
+        
+      k = 0
+      #predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
+      prediction1 = tf.argmax(logits[k], axis=1) 
+      #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
+      '''
+      top_accuracys = [tf.metrics.mean(
+          tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
+          predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
+      '''
+      
+      top_accuracy1 = tf.metrics.mean(
+          tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
+          prediction1, 1), tf.float32))
+    
+      return {
+          '1Day_Accuracy': top_accuracy1
+      }
+
+    eval_metrics = (metric_fn, [labels, logits])
+
+  return tf.contrib.tpu.TPUEstimatorSpec(
+      mode=mode,
+      loss=loss,
+      train_op=train_op,
+      host_call=host_call,
+      eval_metrics=eval_metrics)
+
 def _verify_non_empty_string(value, field_name):
   """Ensures that a given proposed field value is a non-empty string.
 
@@ -670,7 +933,7 @@ def main(unused_argv):
 
   resnet_classifier = tf.contrib.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
-      model_fn=resnet_model_fn,
+      model_fn=densenet_model_fn,
       config=config,
       train_batch_size=FLAGS.train_batch_size,
       eval_batch_size=FLAGS.eval_batch_size,
