@@ -590,7 +590,7 @@ def resnet_model_fn(features, labels, mode, params):
       eval_metrics=eval_metrics)
 
 
-def densenet_model_fn(features, labels, mode, params):
+def densenet_model_fn(symbols_count, period, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
 
   Args:
@@ -939,6 +939,16 @@ def main(unused_argv):
       eval_batch_size=FLAGS.eval_batch_size,
       #predict_batch_size=PREDICT_BATCH_SIZE,
       export_to_tpu=FLAGS.export_to_tpu)
+    
+  densenet_predict_classifier = tf.contrib.tpu.TPUEstimator(
+      use_tpu=FLAGS.use_tpu,
+      model_fn=resnet_model_fn,
+      config=config,
+      train_batch_size=FLAGS.train_batch_size,
+      eval_batch_size=FLAGS.eval_batch_size,
+      #predict_batch_size=PREDICT_BATCH_SIZE,
+      export_to_tpu=FLAGS.export_to_tpu)
+
   assert FLAGS.precision == 'bfloat16' or FLAGS.precision == 'float32', (
       'Invalid value for --precision flag; must be bfloat16 or float32.')
   tf.logging.info('Precision: %s', FLAGS.precision)
@@ -1091,7 +1101,7 @@ def main(unused_argv):
           #predictions = next(resnet_classifier.predict(
           #  input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
           #  ), None)
-          predictions = resnet_classifier.predict(
+          predictions = densenet_predict_classifier.predict(
             input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size, os.path.basename(price_file_item)),
             )
           
