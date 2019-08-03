@@ -590,7 +590,7 @@ def resnet_model_fn(features, labels, mode, params):
       eval_metrics=eval_metrics)
 
 
-def densenet_model_fn(symbols_count, period, price, mode, params):
+def densenet_model_fn(symbols_count, period, prices, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
 
   Args:
@@ -620,9 +620,9 @@ def densenet_model_fn(symbols_count, period, price, mode, params):
   if FLAGS.transpose_input:
     #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
     #image_size = FLAGS.image_size
-    prices = tf.reshape(prices, [period, symbols_count, -1])
+    prices = tf.reshape(prices, [symbols_count, period, -1])
     #features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
-    prices = tf.transpose(prices, [2, 0, 1])  # PSN to NPS
+    prices = tf.transpose(prices, [2, 0, 1])  # SPN to NSP
     #if mode != tf.estimator.ModeKeys.PREDICT:
     #  labels = tf.reshape(labels, [MAX_CASE, FLAGS.num_label_classes, -1])
     #  labels = tf.transpose(labels, [0, 2, 1])  # CLN to CNL
