@@ -328,10 +328,14 @@ def learning_rate_schedule(train_steps, current_epoch):
 
 #创建算命猫11.0的镜像价格数据 20190804
 def feature_mirror(features):
+    #shape:[Batch,Height,Width,Cannel]
+    
     return features
 
 #创建算命猫11.0的镜像标签数据 20190804
 def label_mirror(labels):
+    #shape:[Max_Case,Batch,Label_Class]
+    
     return labels
 
 def resnet_model_fn(features, labels, mode, params):
