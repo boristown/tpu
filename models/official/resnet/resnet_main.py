@@ -326,6 +326,14 @@ def learning_rate_schedule(train_steps, current_epoch):
                           decay_rate, scaled_lr * mult)
   return decay_rate
 
+#创建算命猫11.0的镜像价格数据 20190804
+def feature_mirror(features):
+    return features
+
+#创建算命猫11.0的镜像标签数据 20190804
+def label_mirror(labels):
+    return labels
+
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
 
@@ -389,7 +397,11 @@ def resnet_model_fn(features, labels, mode, params):
             .format(FLAGS.dropblock_groups))
       dropblock_keep_probs[block_group - 1] = 1 - (
           (1.0 - dropblock_keep_prob) / GROUP_COUNT**(GROUP_COUNT - block_group))
-
+  
+  #创建算命猫的镜像训练数据 20190804
+  features=feature_mirror(features)
+  labels=label_mirror(labels)
+    
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
   def build_network():
