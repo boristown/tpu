@@ -329,14 +329,20 @@ def learning_rate_schedule(train_steps, current_epoch):
 #创建算命猫11.0的镜像价格数据 20190804
 def feature_mirror(features):
     #shape:[Batch,Height,Width,Cannel]
-    
-    return features
+    features_copy = tf.identity(features)
+    features_copy = tf.subtract(1, features_copy)
+    features_combine = tf.concat(0, [features, features_copy])
+    #shape:[Batch*2,Height,Width,Cannel]
+    return features_combine
 
 #创建算命猫11.0的镜像标签数据 20190804
 def label_mirror(labels):
     #shape:[Max_Case,Batch,Label_Class]
-    
-    return labels
+    labels_copy = tf.identity(labels)
+    labels_copy = tf.subtract(1 ,labels_copy)
+    labels_combine = tf.concat(1, [labels, labels_copy])
+    #shape:[Max_Case,Batch*2,Label_Class]
+    return labels_combine
 
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
