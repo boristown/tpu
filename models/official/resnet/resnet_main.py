@@ -408,9 +408,10 @@ def resnet_model_fn(features, labels, mode, params):
       dropblock_keep_probs[block_group - 1] = 1 - (
           (1.0 - dropblock_keep_prob) / GROUP_COUNT**(GROUP_COUNT - block_group))
   
-  #创建算命猫的镜像训练数据 20190804
-  features=feature_mirror(features)
-  labels=label_mirror(labels)
+  if mode != tf.estimator.ModeKeys.PREDICT:
+    #创建算命猫的镜像训练数据 20190804
+    features=feature_mirror(features)
+    labels=label_mirror(labels)
     
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
