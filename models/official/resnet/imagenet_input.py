@@ -446,7 +446,8 @@ class ImageNetInput(ImageNetTFExampleInput):
     # For multi-host training, we want each hosts to always process the same
     # subset of files.  Each host only sees a subset of the entire dataset,
     # allowing us to cache larger datasets in memory.
-    dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
+    #dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
+    dataset = tf.data.Dataset.list_files(file_pattern, shuffle=True)
     dataset = dataset.shard(num_hosts, index)
 
     if self.is_training and not self.cache:
@@ -470,10 +471,9 @@ class ImageNetInput(ImageNetTFExampleInput):
     
     if self.cache:
       dataset = dataset.cache().apply(
-          tf.contrib.data.shuffle_and_repeat(1024 * 8))
+          tf.contrib.data.shuffle_and_repeat(1024 * 8 * 4))
     else:
-      dataset = dataset.shuffle(1024)
-    
+      dataset = dataset.shuffle(1024 * 4)
     
     return dataset
 
