@@ -461,12 +461,17 @@ def resnet_model_fn(features, labels, mode, params):
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   #one_hot_labels = labels_reshaped
 
-  #对比算命猫训练的输出结果Losits与正确标签Labels
+  #对比算命猫10.0训练的输出结果Losits与正确标签Labels
+  #cross_entropy = [tf.losses.softmax_cross_entropy(
+  #    logits=logits[k],
+  #    onehot_labels=labels[k],
+  #    label_smoothing=FLAGS.label_smoothing) / (k+1.0) for k in range(MAX_CASE)]
+
+  #算命猫11.0计算Loss的新公式：准确率优先，1天与10天同权
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
-      #onehot_labels=one_hot_labels,
       onehot_labels=labels[k],
-      label_smoothing=FLAGS.label_smoothing) / (k+1.0) for k in range(MAX_CASE)]
+      label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
 
   # Add weight decay to the loss for non-batch-normalization variables.
   loss = sum(cross_entropy) + FLAGS.weight_decay * tf.add_n(
