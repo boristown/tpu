@@ -416,6 +416,7 @@ def resnet_model_fn(features, labels, mode, params):
   if mode != tf.estimator.ModeKeys.PREDICT:
     features=feature_mirror(features)
     labels=label_mirror(labels)
+    tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
     
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
