@@ -328,16 +328,26 @@ def learning_rate_schedule(train_steps, current_epoch):
 
 def feature_mirror(features):
   #shape:[Batch,Height,Width,Cannel]
-  features_copy = tf.identity(features)
+  if FLAGS.precision == 'bfloat16':
+    features_copy = tf.cast(features, tf.float32)
+  elif FLAGS.precision == 'float32':
+    features_copy = tf.identity(features)
   features_copy = tf.subtract(1, features_copy)
+  if FLAGS.precision == 'bfloat16':
+    features_copy = tf.cast(features_copy, tf.bfloat16)
   features_combine = tf.concat(0, [features, features_copy])
   #shape:[Batch*2,Height,Width,Cannel]
   return features_combine
 
 def label_mirror(labels):
   #shape:[Max_Case,Batch,Label_Class]
-  labels_copy = tf.identity(labels)
+  if FLAGS.precision == 'bfloat16':
+    labels_copy = tf.cast(labels, tf.float32)
+  elif FLAGS.precision == 'float32':
+    labels_copy = tf.identity(labels)
   labels_copy = tf.subtract(1 ,labels_copy)
+  if FLAGS.precision == 'bfloat16':
+    labels_copy = tf.cast(labels_copy, tf.bfloat16)
   labels_combine = tf.concat(1, [labels, labels_copy])
   #shape:[Max_Case,Batch*2,Label_Class]
   return labels_combine
