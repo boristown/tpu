@@ -601,10 +601,15 @@ def resnet_model_fn(features, labels, mode, params):
       k = 0
       predictions = [
           tf.argmax(
-              logits[k], axis=1) for k in range(MAX_CASE)]
+          logits[k], 
+          axis=1
+          ) for k in range(MAX_CASE)]
+        
       predictions_mirror = [
           tf.argmax(
-          logits_mirror[k], axis=1) for k in range(MAX_CASE)]
+          logits_mirror[k], 
+          axis=1
+          ) for k in range(MAX_CASE)]
     
       #prediction1 = tf.argmax(logits[k], axis=1) 
       #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
