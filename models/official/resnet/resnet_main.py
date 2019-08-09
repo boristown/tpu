@@ -336,7 +336,7 @@ def feature_mirror(features):
   feature_copy = features_copy * -1.0 + 1.0
   if FLAGS.precision == 'bfloat16':
     features_copy = tf.cast(features_copy, tf.bfloat16)
-  features_combine = tf.concat([features, features_copy], 0)
+  features_combine = tf.concat([features, features_copy], axis=0)
   #shape:[Batch*2,Height,Width,Cannel]
   return features_combine
 
@@ -350,7 +350,7 @@ def label_mirror(labels):
   labels_copy = labels_copy * -1.0 + 1.0
   if FLAGS.precision == 'bfloat16':
     labels_copy = tf.cast(labels_copy, tf.bfloat16)
-  labels_combine = tf.concat([labels, labels_copy], 1)
+  labels_combine = tf.concat([labels, labels_copy], axis=1)
   #shape:[Max_Case,Batch*2,Label_Class]
   return labels_combine
 
