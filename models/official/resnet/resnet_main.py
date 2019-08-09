@@ -420,23 +420,24 @@ def resnet_model_fn(features, labels, mode, params):
     
   # This nested function allows us to avoid duplicating the logic which
   # builds the network, for different values of --precision.
-  def build_network():
+  def build_network(l_features):
     network = resnet_model.resnet_v1(
         resnet_depth=FLAGS.resnet_depth,
         num_classes=FLAGS.num_label_classes,
         dropblock_size=FLAGS.dropblock_size,
         dropblock_keep_probs=dropblock_keep_probs,
         data_format=FLAGS.data_format)
-    return network(inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN)), network(
-        inputs=1.0-features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+    return network(inputs=l_features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
 
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
-      logits, logits_mirror = build_network()
+      logits = build_network(features)
+      logits_mirror = build_network(features*-1.0+1.0)
     logits = tf.cast(logits, tf.float32)
     logits_mirror = tf.cast(logits_mirror, tf.float32)
   elif FLAGS.precision == 'float32':
-    logits, logits_mirror = build_network()
+    logits = build_network(features)
+    logits_mirror = build_network(features*-1.0+1.0)
     
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
@@ -470,7 +471,7 @@ def resnet_model_fn(features, labels, mode, params):
   #    logits=logits[k],
   #    onehot_labels=labels[k],
   #    label_smoothing=FLAGS.label_smoothing) / (k+1.0) for k in range(MAX_CASE)]
-  labels_mirror = 1 - labels
+  labels_mirror = labels*-1+1
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
       onehot_labels=labels[k],
