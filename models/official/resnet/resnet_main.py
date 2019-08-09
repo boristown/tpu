@@ -326,23 +326,21 @@ def learning_rate_schedule(train_steps, current_epoch):
                           decay_rate, scaled_lr * mult)
   return decay_rate
 
-#创建算命猫11.0的镜像价格数据 20190804
 def feature_mirror(features):
-    #shape:[Batch,Height,Width,Cannel]
-    features_copy = tf.identity(features)
-    features_copy = tf.subtract(1, features_copy)
-    features_combine = tf.concat(0, [features, features_copy])
-    #shape:[Batch*2,Height,Width,Cannel]
-    return features_combine
+  #shape:[Batch,Height,Width,Cannel]
+  features_copy = tf.identity(features)
+  features_copy = tf.subtract(1, features_copy)
+  features_combine = tf.concat(0, [features, features_copy])
+  #shape:[Batch*2,Height,Width,Cannel]
+  return features_combine
 
-#创建算命猫11.0的镜像标签数据 20190804
 def label_mirror(labels):
-    #shape:[Max_Case,Batch,Label_Class]
-    labels_copy = tf.identity(labels)
-    labels_copy = tf.subtract(1 ,labels_copy)
-    labels_combine = tf.concat(1, [labels, labels_copy])
-    #shape:[Max_Case,Batch*2,Label_Class]
-    return labels_combine
+  #shape:[Max_Case,Batch,Label_Class]
+  labels_copy = tf.identity(labels)
+  labels_copy = tf.subtract(1 ,labels_copy)
+  labels_combine = tf.concat(1, [labels, labels_copy])
+  #shape:[Max_Case,Batch*2,Label_Class]
+  return labels_combine
 
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
@@ -409,7 +407,6 @@ def resnet_model_fn(features, labels, mode, params):
           (1.0 - dropblock_keep_prob) / GROUP_COUNT**(GROUP_COUNT - block_group))
   
   if mode != tf.estimator.ModeKeys.PREDICT:
-    #创建算命猫的镜像训练数据 20190804
     features=feature_mirror(features)
     labels=label_mirror(labels)
     
@@ -425,7 +422,6 @@ def resnet_model_fn(features, labels, mode, params):
     return network(
         inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
 
-  #执行算命猫的本次训练 20190802
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
       logits = build_network()
@@ -461,13 +457,11 @@ def resnet_model_fn(features, labels, mode, params):
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   #one_hot_labels = labels_reshaped
 
-  #对比算命猫10.0训练的输出结果Losits与正确标签Labels
   #cross_entropy = [tf.losses.softmax_cross_entropy(
   #    logits=logits[k],
   #    onehot_labels=labels[k],
   #    label_smoothing=FLAGS.label_smoothing) / (k+1.0) for k in range(MAX_CASE)]
 
-  #算命猫11.0计算Loss的新公式：准确率优先，1天与10天同权
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
       onehot_labels=labels[k],
@@ -501,7 +495,6 @@ def resnet_model_fn(features, labels, mode, params):
     '''
     # I think Adam optimizer is better than LARS/Momentum optimizer for sole trader
     # Boris Town 20190207
-    # 算命猫使用了Adam优化器 20190802
     optimizer = tf.train.AdamOptimizer()
     if FLAGS.use_tpu:
       # When using TPU, wrap the optimizer with CrossShardOptimizer which
