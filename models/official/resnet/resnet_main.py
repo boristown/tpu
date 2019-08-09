@@ -428,14 +428,17 @@ def resnet_model_fn(features, labels, mode, params):
         dropblock_keep_probs=dropblock_keep_probs,
         data_format=FLAGS.data_format)
     return network(
-        inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+        inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN)),
+           network(
+        inputs=1.0-features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
 
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
-      logits = build_network()
+      logits, logits_mirror = build_network()
     logits = tf.cast(logits, tf.float32)
+    logits_mirror = tf.cast(logits_mirror, tf.float32)
   elif FLAGS.precision == 'float32':
-    logits = build_network()
+    logits, logits_mirror = build_network()
     
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
@@ -469,14 +472,19 @@ def resnet_model_fn(features, labels, mode, params):
   #    logits=logits[k],
   #    onehot_labels=labels[k],
   #    label_smoothing=FLAGS.label_smoothing) / (k+1.0) for k in range(MAX_CASE)]
-
+  labels_mirror = 1 - labels
   cross_entropy = [tf.losses.softmax_cross_entropy(
       logits=logits[k],
       onehot_labels=labels[k],
       label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
 
+  cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
+      logits=logits_mirror[k],
+      onehot_labels=labels_mirror[k],
+      label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
+    
   # Add weight decay to the loss for non-batch-normalization variables.
-  loss = sum(cross_entropy) + FLAGS.weight_decay * tf.add_n(
+  loss = sum(cross_entropy) + sum(cross_entropy_mirror) + FLAGS.weight_decay * tf.add_n(
       [tf.nn.l2_loss(v) for v in tf.trainable_variables()
        if 'batch_normalization' not in v.name])
 
@@ -592,21 +600,36 @@ def resnet_model_fn(features, labels, mode, params):
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
         
       k = 0
-      #predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
-      prediction1 = tf.argmax(logits[k], axis=1) 
+      predictions = [tf.argmax(logits[k], axis=1) for k in range(MAX_CASE)]
+      predictions_mirror = [tf.argmax(logits_mirror[k], axis=1) for k in range(MAX_CASE)]
+      #prediction1 = tf.argmax(logits[k], axis=1) 
       #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
-      '''
+      
       top_accuracys = [tf.metrics.mean(
           tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
-      '''
+
+      top_accuracys_mirror = [tf.metrics.mean(
+          tf.cast(tf.nn.in_top_k(tf.cast(labels_mirror[k],tf.float32), 
+          predictions_mirror[k], 1), tf.float32)) for k in range(MAX_CASE)]
       
+      '''
       top_accuracy1 = tf.metrics.mean(
           tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
           prediction1, 1), tf.float32))
-    
+      '''
+        
       return {
-          '1Day_Accuracy': top_accuracy1
+          '01Day_Accuracy': top_accuracy[0],
+          '01Day_Accuracy_Mirror': top_accuracy_mirror[0],
+          '03Day_Accuracy': top_accuracy[2],
+          '03Day_Accuracy_Mirror': top_accuracy_mirrorr[2],
+          '05Day_Accuracy': top_accuracy[4],
+          '05Day_Accuracy_Mirror': top_accuracy_mirror[4],
+          '07Day_Accuracy': top_accuracy[6],
+          '07Day_Accuracy_Mirror': top_accuracy_mirror[6],
+          '09Day_Accuracy': top_accuracy[8],
+          '09Day_Accuracy_Mirror': top_accuracy_mirror[8],
       }
 
     eval_metrics = (metric_fn, [labels, logits])
