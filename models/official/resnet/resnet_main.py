@@ -632,7 +632,7 @@ def resnet_model_fn(features, labels, mode, params):
           '01Day_Accuracy': top_accuracys[0],
           '01Day_Accuracy_Mirror': top_accuracys_mirror[0],
           '03Day_Accuracy': top_accuracys[2],
-          '03Day_Accuracy_Mirror': top_accuracys_mirrorr[2],
+          '03Day_Accuracy_Mirror': top_accuracys_mirror[2],
           '05Day_Accuracy': top_accuracys[4],
           '05Day_Accuracy_Mirror': top_accuracys_mirror[4],
           '07Day_Accuracy': top_accuracys[6],
