@@ -427,9 +427,7 @@ def resnet_model_fn(features, labels, mode, params):
         dropblock_size=FLAGS.dropblock_size,
         dropblock_keep_probs=dropblock_keep_probs,
         data_format=FLAGS.data_format)
-    return network(
-        inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN)),
-           network(
+    return network(inputs=features, is_training=(mode == tf.estimator.ModeKeys.TRAIN)), network(
         inputs=1.0-features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
 
   if FLAGS.precision == 'bfloat16':
