@@ -1,7 +1,6 @@
 # 算命猫ZeroAI #
-## by boristown
 
-Forked from tensorflow/tpu
+Forked from tensorflow/tpu by boristown
 
 ## Cloud TPUs
 
