@@ -1,4 +1,9 @@
-# Cloud TPUs #
+# 算命猫ZeroAI #
+## by boristown
+
+Forked from tensorflow/tpu
+
+## Cloud TPUs
 
 This repository is a collection of reference models and tools used with
 [Cloud TPUs](https://cloud.google.com/tpu/).
