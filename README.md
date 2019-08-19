@@ -1,6 +1,8 @@
 # 算命猫ZeroAI #
 
-Forked from tensorflow/tpu by boristown 唐博
+Forked from tensorflow/tpu by 唐博boristown 
+
+全球最好的L5级全自动交易AI，金融终结者。
 
 ## Cloud TPUs
 
