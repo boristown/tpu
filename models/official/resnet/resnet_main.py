@@ -903,9 +903,9 @@ def main(unused_argv):
             dirpath = os.path.join(FLAGS.predict_dir, dirname)
             if not os.path.exists(dirpath):
               os.makedirs(dirpath)
-            predict_filename_parts = os.path.join(dirpath, 'part-0001.part')
+            predict_filename_part = os.path.join(dirpath, 'part-0001.part')
             predict_filename_csv = os.path.join(dirpath, 'predict-0001.csv')
-          predict_file = open(predict_filename_parts, "w")
+          predict_file = open(predict_filename_part, "w")
           predict_file.truncate()
           predict_line = ''
           
@@ -933,7 +933,7 @@ def main(unused_argv):
             predict_file.write(predict_line+'\n')
             tf.logging.info('%s' % (predict_line))
           predict_file.close()
-          os.rename(predict_filename_parts, predict_filename_csv)
+          os.rename(predict_filename_part, predict_filename_csv)
           if(predict_line != ''):
             #for price_file in price_files:
             tf.logging.info('Removing ' + price_file_item)
