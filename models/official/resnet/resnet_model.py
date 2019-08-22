@@ -564,6 +564,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
 
     # The activation is 7x7 so this is a global average pool.
     # TODO(huangyp): reduce_mean will be faster.
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
     pool_size = (inputs.shape[1], inputs.shape[2])
     inputs = tf.layers.average_pooling2d(
         inputs=inputs, pool_size=pool_size, strides=1, padding='VALID',
