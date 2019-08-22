@@ -417,7 +417,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
   
   #if not USE_DENSENET:
   inputs = block_fn(inputs, filters, is_training, strides,
-                    use_projection=True if name!="block_group1" else False, data_format=data_format,
+                    use_projection=True if name!="block_group0" else False, data_format=data_format,
                     dropblock_keep_prob=dropblock_keep_prob,
                     dropblock_size=dropblock_size)
   
