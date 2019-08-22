@@ -360,11 +360,11 @@ def bottleneck_block(inputs, filters, is_training, strides,
     
   if use_projection:
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=3 if inputs.shape[2]>=3 else inputs.shape[2], strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=3 if inputs.shape[2]>=3 else [inputs.shape[2],inputs.shape[2]], strides=1,
         data_format=data_format)
   else:
     inputs = conv2d_same_padding(
-        inputs=inputs, filters=filters, kernel_size=3 if inputs.shape[2]>=3 else inputs.shape[2], strides=1,
+        inputs=inputs, filters=filters, kernel_size=3 if inputs.shape[2]>=3 else [inputs.shape[2],inputs.shape[2]], strides=1,
         data_format=data_format)
     
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
