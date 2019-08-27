@@ -360,11 +360,11 @@ def bottleneck_block(inputs, filters, is_training, strides,
     
   if use_projection:
     inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=filters_out, kernel_size=3 if inputs.shape[2]>=3 else inputs.shape[2], strides=1,
+        inputs=inputs, filters=filters_out, kernel_size=3 if inputs.shape[2]>=3 else [inputs.shape[2],inputs.shape[2]], strides=1,
         data_format=data_format)
   else:
     inputs = conv2d_same_padding(
-        inputs=inputs, filters=filters, kernel_size=3 if inputs.shape[2]>=3 else inputs.shape[2], strides=1,
+        inputs=inputs, filters=filters, kernel_size=3 if inputs.shape[2]>=3 else [inputs.shape[2],inputs.shape[2]], strides=1,
         data_format=data_format)
     
   inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
@@ -417,7 +417,7 @@ def block_group(inputs, filters, block_fn, blocks, strides, is_training, name,
   
   #if not USE_DENSENET:
   inputs = block_fn(inputs, filters, is_training, strides,
-                    use_projection=True if name!="block_group1" else False, data_format=data_format,
+                    use_projection=True if name!="block_group0" else False, data_format=data_format,
                     dropblock_keep_prob=dropblock_keep_prob,
                     dropblock_size=dropblock_size)
   
@@ -564,6 +564,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
 
     # The activation is 7x7 so this is a global average pool.
     # TODO(huangyp): reduce_mean will be faster.
+    tf.logging.info("inputs.shape=%s" % (inputs.shape))
     pool_size = (inputs.shape[1], inputs.shape[2])
     inputs = tf.layers.average_pooling2d(
         inputs=inputs, pool_size=pool_size, strides=1, padding='VALID',
