@@ -900,7 +900,7 @@ def main(unused_argv):
           predict_filename_part = os.path.join(FLAGS.predict_dir, 'part-0001.part')
           predict_filename_csv = os.path.join(FLAGS.predict_dir, 'predict-0001.csv')
           if len(price_files) > 1:
-            dirname = re.findall(r"price-(.+?)_\d+?\.csv",price_file_item)[0]
+            dirname = re.findall(r"price-(.+?)\.csv",price_file_item)[0]
             dirpath = os.path.join(FLAGS.predict_dir, dirname)
             if not os.path.exists(dirpath):
               os.makedirs(dirpath)
