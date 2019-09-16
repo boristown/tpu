@@ -874,7 +874,7 @@ def main(unused_argv):
       price_file_pattern = os.path.join(
         FLAGS.prices_dir, 'price-*.csv')
       while True:
-        time.sleep(10)
+        time.sleep(1)
         price_files  = glob.glob(price_file_pattern)
         if len(price_files) == 0:
           continue
