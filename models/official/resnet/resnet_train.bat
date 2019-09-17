@@ -1,11 +1,11 @@
 python resnet_main.py ^
 --train_steps=7000 ^
---train_batch_size=2 ^
---eval_batch_size=2 ^
---num_train_images=4720592 ^
---num_eval_images=127306 ^
---steps_per_eval=5 ^
---iterations_per_loop=5 ^
+--train_batch_size=2203 ^
+--eval_batch_size=2203^
+--num_train_images=2203 ^
+--num_eval_images=2203 ^
+--steps_per_eval=100 ^
+--iterations_per_loop=100 ^
 --resnet_depth=169 ^
 --use_tpu=False ^
 --data_dir="C:\TPU\data" ^
