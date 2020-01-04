@@ -34,7 +34,7 @@ LABEL_COUNT = 2
 FILTER_COUNT= 32
 GROWTH_RATE = 32
 USE_DENSENET = True
-MAX_CASE = 10
+#MAX_CASE = 10
 group_count = 4
 DENSE_REDUCTION = 0.5
 
@@ -579,12 +579,16 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           #inputs, [-1, (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)*4 if block_fn is bottleneck_block else (FILTER_COUNT+GROWTH_RATE*LAYERS_SUM)])
           inputs, [-1, int(inputs.shape[3])])
     
-    outputarray = [tf.identity(tf.layers.dense(
+    #outputarray = [tf.identity(tf.layers.dense(
+    #    inputs=inputs,
+    #    units=num_classes,
+    #    kernel_initializer=tf.random_normal_initializer(stddev=.01)), 'final_dense'+str(k)) for k in range(MAX_CASE)]
+    
+    outputarray = tf.identity(tf.layers.dense(
         inputs=inputs,
         units=num_classes,
-        kernel_initializer=tf.random_normal_initializer(stddev=.01)), 'final_dense'+str(k)) for k in range(MAX_CASE)]
-    #output1 = tf.identity(output1, 'final_dense1')
-    #tf.logging.info("final_dense.shape=%s" % (inputs.shape))
+        kernel_initializer=tf.random_normal_initializer(stddev=.01)), 'final_dense')
+
     return outputarray
 
   model.default_image_size = PRICE_COUNT
