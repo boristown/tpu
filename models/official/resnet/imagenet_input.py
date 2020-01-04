@@ -32,7 +32,7 @@ DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
 TEST_CASE = 1
-MAX_CASE = 10
+#MAX_CASE = 10
 
 def image_serving_input_fn():
   """Serving input fn for raw images."""
@@ -124,11 +124,13 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     # Decode the csv_line to tensor.
-    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE)]
+    #record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE)]
+    record_defaults = [[1.0] for col in range(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT)]
     items = tf.decode_csv(line, record_defaults)
     prices = items[0:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT]
     #prices = [0 if x==0.5 else x for x in prices]
-    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE]
+    #operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT*MAX_CASE]
+    operations = items[PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT:PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT+LABEL_COUNT]
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       operations = tf.cast(operations, tf.float32)
@@ -171,15 +173,16 @@ class ImageNetTFExampleInput(object):
     operationMod = tf.mod(operations, 2)
     operationDiv = tf.floordiv(operations, 2)
     labels = tf.identity(operationMod)
-    for i in range(MAX_CASE-1):
-        operationMod = tf.mod(operationDiv, 2)
-        operationDiv = tf.floordiv(operationDiv, 2)
-        #op_list[i][1] = parsed['label']
-        labels = tf.concat([operationMod, labels], 0)
-        #tf.logging.info("labels=%s" % (labels.shape))
+    #for i in range(MAX_CASE-1):
+    #    operationMod = tf.mod(operationDiv, 2)
+    #    operationDiv = tf.floordiv(operationDiv, 2)
+    #    #op_list[i][1] = parsed['label']
+    #    labels = tf.concat([operationMod, labels], 0)
+    #    #tf.logging.info("labels=%s" % (labels.shape))
     #operations = tf.cast(tf.stack(op_list), tf.int32)
     labels2 = tf.subtract(1, labels)
-    labels = tf.concat([labels2, labels], 1)
+    #labels = tf.concat([labels2, labels], 1)
+    labels = tf.concat([labels2, labels], 0)
     labels = tf.reshape(labels, [-1])
     tf.logging.info("prices=%s,labels=%s" % (prices.shape,labels.shape))
     return prices,labels
