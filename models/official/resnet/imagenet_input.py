@@ -151,7 +151,8 @@ class ImageNetTFExampleInput(object):
       Returns a tuple of (prices, operations) from the TFExample.
     """
     keys_to_features = {
-        'prices' : tf.FixedLenFeature([PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT], tf.float32, default_value=[0.0]*(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)),
+        #'prices' : tf.FixedLenFeature([PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT], tf.float32, default_value=[0.0]*(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)),
+        'prices' : tf.FixedVarFeature(tf.float32),
         'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
 
