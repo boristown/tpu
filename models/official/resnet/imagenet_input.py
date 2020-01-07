@@ -159,34 +159,36 @@ class ImageNetTFExampleInput(object):
     parsed = tf.parse_single_example(line, keys_to_features)
     
     prices = parsed['prices']
-    operations = parsed['label']
+    #operations = parsed['label']
+    label = parsed['label']
     
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
-      operations = tf.cast(operations, tf.int32)
+      label = tf.cast(label, tf.int32)
     else:
       prices = tf.cast(prices, tf.bfloat16)
-      operations = tf.cast(operations, tf.int32)
-    prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
+      label = tf.cast(label, tf.int32)
+    
+    prices = tf.reshape(prices, [-1])
+    label = tf.reshape(label, [-1])
+    tf.logging.info("prices=%s,labels=%s" % (prices,label))
+    return prices,label
+  
+    '''
+    #prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
+    prices = tf.reshape(prices,[-1])
     operations = tf.reshape(operations, [1,1])
     #operations = tf.tile(operations, [MAX_CASE, LABEL_COUNT])
     #op_list = np.zeros([MAX_CASE, LABEL_COUNT])
     operationMod = tf.mod(operations, 2)
     operationDiv = tf.floordiv(operations, 2)
     labels = tf.identity(operationMod)
-    #for i in range(MAX_CASE-1):
-    #    operationMod = tf.mod(operationDiv, 2)
-    #    operationDiv = tf.floordiv(operationDiv, 2)
-    #    #op_list[i][1] = parsed['label']
-    #    labels = tf.concat([operationMod, labels], 0)
-    #    #tf.logging.info("labels=%s" % (labels.shape))
-    #operations = tf.cast(tf.stack(op_list), tf.int32)
     labels2 = tf.subtract(1, labels)
-    #labels = tf.concat([labels2, labels], 1)
     labels = tf.concat([labels2, labels], 0)
     labels = tf.reshape(labels, [-1])
     tf.logging.info("prices=%s,labels=%s" % (prices.shape,labels.shape))
     return prices,labels
+    '''
     
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
