@@ -366,7 +366,9 @@ def resnet_model_fn(features, labels, mode, params):
   """
   if isinstance(features, dict):
     features = features['feature']
-
+  
+  # Insert Loop Code From Here Boris Town 20200109
+    
   # In most cases, the default data format NCHW instead of NHWC should be
   # used for a significant performance boost on GPU/TPU. NHWC should be used
   # only if the network needs to be run on CPU since the pooling operations
