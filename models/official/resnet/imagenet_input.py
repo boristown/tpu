@@ -150,17 +150,28 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
+    '''
     keys_to_features = {
         #'prices' : tf.FixedLenFeature([PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT], tf.float32, default_value=[0.0]*(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)),
         'prices' : tf.VarLenFeature(tf.float32),
         'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
-
-    parsed = tf.parse_single_example(line, keys_to_features)
+    '''
+    label_features = {
+        "label": tf.FixedLenFeature([], dtype=tf.int64)
+    }
+    prices_features = {
+        "prices": tf.FixedLenSequenceFeature([], dtype=tf.float32)
+    }
+    #parsed = tf.parse_single_example(line, keys_to_features)
+    label_parsed, prices_parsed = tf.parse_single_sequence_example(
+        serialized=serialized_example,
+        context_features=label_features,
+        sequence_features=prices_features
+    )
     
-    prices = parsed['prices']
-    #operations = parsed['label']
-    label = parsed['label']
+    prices = prices_features['prices']
+    label = label_features['label']
     
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
@@ -169,7 +180,7 @@ class ImageNetTFExampleInput(object):
       prices = tf.cast(prices, tf.bfloat16)
       label = tf.cast(label, tf.int32)
     
-    prices = tf.sparse.to_dense(prices) #20200109 SparseTensor To Dense
+    #prices = tf.sparse.to_dense(prices) #20200109 SparseTensor To Dense
     prices = tf.reshape(prices, [-1])
     label = tf.reshape(label, [-1])
     tf.logging.info("prices=%s,labels=%s" % (prices,label))
