@@ -375,20 +375,16 @@ def resnet_model_fn(features, labels, mode, params):
   # are only supported on NHWC.
   if FLAGS.data_format == 'channels_first':
     assert not FLAGS.transpose_input    # channels_first only for GPU
-    features = tf.transpose(features, [0, 3, 1, 2])
+    #features = tf.transpose(features, [0, 3, 1, 2])
 
   #if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
   if FLAGS.transpose_input:
-    #image_size = tf.sqrt(tf.shape(features)[0] / (3 * tf.shape(labels)[0]))
-    #image_size = FLAGS.image_size
-    #features = tf.reshape(features, [image_size, image_size, 3, -1])
-    features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
-    features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
+    #features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
+    #features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
+    features = tf.transpose(features, [1, 0])  # PN to NP
     if mode != tf.estimator.ModeKeys.PREDICT:
-      #labels = tf.reshape(labels, [MAX_CASE, FLAGS.num_label_classes, -1])
-      labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
-      #labels = tf.transpose(labels, [0, 2, 1])  # CLN to CNL
-      labels = tf.transpose(labels, [1, 0])  # LN to NL
+      #labels = tf.reshape(labels, [FLAGS.num_label_classes, -1])
+      #labels = tf.transpose(labels, [1, 0])  # LN to NL
       tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
     
 
