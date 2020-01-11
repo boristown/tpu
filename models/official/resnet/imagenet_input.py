@@ -287,7 +287,7 @@ class ImageNetTFExampleInput(object):
     # batch size. As long as this validation is done with consistent batch size,
     # exactly the same images will be used.
     dataset = dataset.apply(
-        tf.contrib.data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             self.dataset_parser_tfrecord, batch_size=batch_size,
             num_parallel_batches=self.num_parallel_calls, drop_remainder=True))
 
@@ -301,7 +301,7 @@ class ImageNetTFExampleInput(object):
     dataset = dataset.map(functools.partial(self.set_shapes, batch_size))
 
     # Prefetch overlaps in-feed with training
-    dataset = dataset.prefetch(tf.contrib.data.AUTOTUNE)
+    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
     return dataset
 
 
@@ -344,8 +344,8 @@ class ImageNetTFExampleInput(object):
     # batch size. As long as this validation is done with consistent batch size,
     # exactly the same images will be used.
     predict_dataset = predict_dataset.apply(
-#    tf.contrib.data.map(self.dataset_parser))
-        tf.contrib.data.map_and_batch(
+#    tf.data.experimental.map(self.dataset_parser))
+        tf.data.experimental.map_and_batch(
             self.dataset_predict_parser, batch_size=batch_size,
             num_parallel_batches=self.num_parallel_calls, drop_remainder=True))
 
@@ -359,7 +359,7 @@ class ImageNetTFExampleInput(object):
     predict_dataset = predict_dataset.map(functools.partial(self.set_predict_shapes, batch_size))
 
     # Prefetch overlaps in-feed with training
-    predict_dataset = predict_dataset.prefetch(tf.contrib.data.AUTOTUNE)
+    predict_dataset = predict_dataset.prefetch(tf.data.experimental.AUTOTUNE)
     tf.logging.info('predict_dataset=%s' % (predict_dataset))
     return predict_dataset
 
@@ -486,14 +486,14 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     # Read the data from disk in parallel
     dataset = dataset.apply(
-        tf.contrib.data.parallel_interleave(
+        tf.data.experimental.parallel_interleave(
             fetch_dataset, cycle_length=64, sloppy=True))
     
     dataset = dataset.apply(tf.data.experimental.ignore_errors())
     
     if self.cache:
       dataset = dataset.cache().apply(
-          tf.contrib.data.shuffle_and_repeat(1024 * 8 * 4))
+          tf.data.experimental.shuffle_and_repeat(1024 * 8 * 4))
     else:
       dataset = dataset.shuffle(1024 * 4)
     
@@ -531,12 +531,12 @@ class ImageNetInput(ImageNetTFExampleInput):
 
     # Read the data from disk in parallel
     predict_dataset = predict_dataset.apply(
-        tf.contrib.data.parallel_interleave(
+        tf.data.experimental.parallel_interleave(
             fetch_predict_dataset, cycle_length=64, sloppy=True))
     '''
     if self.cache:
       predict_dataset = predict_dataset.cache().apply(
-          tf.contrib.data.shuffle_and_repeat(1024 * 16))
+          tf.data.experimental.shuffle_and_repeat(1024 * 16))
     else:
       predict_dataset = dataset.shuffle(1024)
     '''
@@ -575,8 +575,14 @@ class ImageNetBigtableInput(ImageNetTFExampleInput):
 
   def make_source_dataset(self, index, num_hosts):
     """See base class."""
+    try:
+      from tensorflow.contrib.cloud import BigtableClient  # pylint: disable=g-import-not-at-top
+    except ImportError as e:
+      logging.exception('Bigtable is not supported in TensorFlow 2.x.')
+      raise e
+      
     data = self.selection
-    client = tf.contrib.cloud.BigtableClient(data.project, data.instance)
+    client = BigtableClient(data.project, data.instance)
     table = client.table(data.table)
     ds = table.parallel_scan_prefix(data.prefix,
                                     columns=[(data.column_family,
