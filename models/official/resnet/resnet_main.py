@@ -643,12 +643,7 @@ def resnet_model_fn(features, labels, mode, params):
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
         
       k = 0
-
-      predictions = 
-          tf.argmax(
-          logits,
-          axis=1
-          )
+      predictions = tf.argmax(logits, axis=1)
         
       #predictions_mirror = 
       #    tf.argmax(
@@ -664,8 +659,8 @@ def resnet_model_fn(features, labels, mode, params):
       #    predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
 
       top_accuracys = tf.metrics.mean(
-          tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
-          predictions, 1), tf.float32))
+        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+        predictions, 1), tf.float32))
     
       #top_accuracys_mirror = tf.metrics.mean(
       #    tf.cast(tf.nn.in_top_k(tf.cast(labels_mirror,tf.float32), 
