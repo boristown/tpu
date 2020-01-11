@@ -428,17 +428,41 @@ def resnet_model_fn(features, labels, mode, params):
         dropblock_keep_probs=dropblock_keep_probs,
         data_format=FLAGS.data_format)
     return network(inputs=l_features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
-
+  
+  priceInputCount = PRICE_COUNT * DIMENSION_COUNT * CHANNEL_COUNT
+  if FLAGS.precision == 'bfloat16':
+      trainingInputSet = tf.placeholder(tf.bfloat16, shape = [None, priceInputCount])
+  else:
+      trainingInputSet = tf.placeholder(tf.float32, shape = [None, priceInputCount])
+  LabelSet = tf.placeholder(tf.int32, shape = [None, 2])
+  batchCount = labels.shape[0]
+  for batchIndex in Range(batchCount):
+    priceList = features[batchIndex]
+    if labels[batchIndex] > priceInputCount:
+      trainingCount = labels[batchIndex] - priceInputCount
+      if trainingCount > 0:
+        for trainingIndex in Range(trainingCount):
+          trainingInputData = priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1]
+          trainingInputData = trainingInputData.reshape(-1, priceInputCount)
+          trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData])
+          trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData*-1.0+1.0])
+          LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
+          LabelSet = tf.concat(0,[LabelSet, LabelData])
+          LabelSet = tf.concat(0,[LabelSet, LabelData*-1+1])
+          
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
-      logits = build_network(features)
-      logits_mirror = build_network(features*-1.0+1.0)
-    logits = tf.cast(logits, tf.float32)
-    logits_mirror = tf.cast(logits_mirror, tf.float32)
+      #logits = build_network(features)
+      #logits_mirror = build_network(features*-1.0+1.0)
+      logits = build_network(trainingInputSet)
   elif FLAGS.precision == 'float32':
-    logits = build_network(features)
-    logits_mirror = build_network(features*-1.0+1.0)
-    
+    #logits = build_network(features)
+    #logits_mirror = build_network(features*-1.0+1.0)
+    logits = build_network(trainingInputSet)
+  
+  logits = tf.cast(logits, tf.float32)
+  #logits_mirror = tf.cast(logits_mirror, tf.float32)
+  
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
         'classes': tf.argmax(logits, axis=2),
@@ -467,15 +491,20 @@ def resnet_model_fn(features, labels, mode, params):
   #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
   #one_hot_labels = labels_reshaped
 
-  labels_mirror = labels*-1+1
+  #labels_mirror = labels*-1+1
   #cross_entropy = [tf.losses.softmax_cross_entropy(
   #    logits=logits[k],
   #    onehot_labels=labels[k],
   #    label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
 
+  #cross_entropy = tf.losses.softmax_cross_entropy(
+  #    logits=logits,
+  #    onehot_labels=labels,
+  #    label_smoothing=FLAGS.label_smoothing)
+
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
-      onehot_labels=labels,
+      onehot_labels=LabelSet,
       label_smoothing=FLAGS.label_smoothing)
 
   #cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
@@ -484,16 +513,15 @@ def resnet_model_fn(features, labels, mode, params):
   #    label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
     
 
-  cross_entropy_mirror = tf.losses.softmax_cross_entropy(
-      logits=logits_mirror,
-      onehot_labels=labels_mirror,
-      label_smoothing=FLAGS.label_smoothing)
+  #cross_entropy_mirror = tf.losses.softmax_cross_entropy(
+  #    logits=logits_mirror,
+  #    onehot_labels=labels_mirror,
+  #    label_smoothing=FLAGS.label_smoothing)
 
   # Add weight decay to the loss for non-batch-normalization variables.
   #loss = sum(cross_entropy) + sum(cross_entropy_mirror) + FLAGS.weight_decay * tf.add_n(
   #    [tf.nn.l2_loss(v) for v in tf.trainable_variables()
   #     if 'batch_normalization' not in v.name])
-
 
   loss = cross_entropy + cross_entropy_mirror + FLAGS.weight_decay * tf.add_n(
       [tf.nn.l2_loss(v) for v in tf.trainable_variables()
@@ -521,10 +549,10 @@ def resnet_model_fn(features, labels, mode, params):
           momentum=FLAGS.momentum,
           use_nesterov=True)
     '''
+    
     # I think Adam optimizer is better than LARS/Momentum optimizer for ZeroAI
     # Boris Town 20190207
     optimizer = tf.train.AdamOptimizer()
-    
     
     if FLAGS.use_tpu:
       # When using TPU, wrap the optimizer with CrossShardOptimizer which
@@ -592,7 +620,8 @@ def resnet_model_fn(features, labels, mode, params):
 
   eval_metrics = None
   if mode == tf.estimator.ModeKeys.EVAL:
-    def metric_fn(labels, labels_mirror, logits, logits_mirror):
+    #def metric_fn(labels, labels_mirror, logits, logits_mirror):
+    def metric_fn(labels, logits):
       """Evaluation metric function. Evaluates accuracy.
 
       This function is executed on the CPU and should not directly reference
@@ -614,29 +643,18 @@ def resnet_model_fn(features, labels, mode, params):
       # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
         
       k = 0
-      #predictions = [
-      #    tf.argmax(
-      #    logits[k], 
-      #    axis=1
-      #    ) for k in range(MAX_CASE)]
-      
+
       predictions = 
           tf.argmax(
           logits,
           axis=1
           )
         
-      #predictions_mirror = [
+      #predictions_mirror = 
       #    tf.argmax(
-      #    logits_mirror[k], 
+      #    logits_mirror,
       #    axis=1
-      #    ) for k in range(MAX_CASE)]
-    
-      predictions_mirror = 
-          tf.argmax(
-          logits_mirror,
-          axis=1
-          )
+      #    )
         
       #prediction1 = tf.argmax(logits[k], axis=1) 
       #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
@@ -649,14 +667,9 @@ def resnet_model_fn(features, labels, mode, params):
           tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
           predictions, 1), tf.float32))
     
-      #top_accuracys_mirror = [tf.metrics.mean(
-      #    tf.cast(tf.nn.in_top_k(tf.cast(labels_mirror[k],tf.float32), 
-      #    predictions_mirror[k], 1), tf.float32)) for k in range(MAX_CASE)]
-      
-    
-      top_accuracys_mirror = tf.metrics.mean(
-          tf.cast(tf.nn.in_top_k(tf.cast(labels_mirror,tf.float32), 
-          predictions_mirror, 1), tf.float32))
+      #top_accuracys_mirror = tf.metrics.mean(
+      #    tf.cast(tf.nn.in_top_k(tf.cast(labels_mirror,tf.float32), 
+      #    predictions_mirror, 1), tf.float32))
         
       '''
       top_accuracy1 = tf.metrics.mean(
@@ -679,10 +692,11 @@ def resnet_model_fn(features, labels, mode, params):
 
       return {
           'Accuracy': top_accuracys,
-          'Accuracy_Mirror': top_accuracys_mirror,
+          #'Accuracy_Mirror': top_accuracys_mirror,
       }
 
-    eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
+    #eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
+    eval_metrics = (metric_fn, [labels, logits])
 
   return tf.contrib.tpu.TPUEstimatorSpec(
       mode=mode,
