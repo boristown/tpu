@@ -22,8 +22,12 @@ import abc
 from collections import namedtuple
 import functools
 import os
-import tensorflow as tf
+#import tensorflow as tf
 import numpy as np
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 # from official.resnet import resnet_preprocessing
 #import resnet_preprocessing
 
