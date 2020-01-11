@@ -36,6 +36,8 @@ import re
 import tensorflow.compat.v1 as tf
 #import tensorflow.compat.v2 as tf2
 
+tf.disable_v2_behavior()
+
 #from common import tpu_profiler_hook
 #from official.resnet import imagenet_input2
 import imagenet_input
@@ -56,7 +58,6 @@ from tensorflow.compat.v1.contrib.training.python.training import evaluation
 from tensorflow.compat.v1.core.protobuf import rewriter_config_pb2
 from tensorflow.compat.v1.python.estimator import estimator
 
-tf.disable_v2_behavior()
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
