@@ -774,7 +774,7 @@ def main(unused_argv):
     save_checkpoints_steps = None
   else:
     save_checkpoints_steps = max(100, FLAGS.iterations_per_loop)
-  config = tf.contrib.tpu.RunConfig(
+  config = tf.estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       model_dir=FLAGS.model_dir,
       save_checkpoints_steps=save_checkpoints_steps,
@@ -783,13 +783,13 @@ def main(unused_argv):
           graph_options=tf.GraphOptions(
               rewrite_options=rewriter_config_pb2.RewriterConfig(
                   disable_meta_optimizer=True))),
-      tpu_config=tf.contrib.tpu.TPUConfig(
+      tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_cores,
-          per_host_input_for_training=tf.contrib.tpu.InputPipelineConfig
+          per_host_input_for_training=tf.estimator.tpu.InputPipelineConfig
           .PER_HOST_V2))  # pylint: disable=line-too-long
 
-  resnet_classifier = tf.contrib.tpu.TPUEstimator(
+  resnet_classifier = tf.estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=resnet_model_fn,
       config=config,
