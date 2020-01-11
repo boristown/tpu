@@ -33,7 +33,7 @@ import numpy as np
 import tensorflow as tf
 import re
 
-from common import tpu_profiler_hook
+#from common import tpu_profiler_hook
 #from official.resnet import imagenet_input2
 import imagenet_input
 #from official.resnet import lars_util
@@ -878,12 +878,14 @@ def main(unused_argv):
             async_checkpoint.AsyncCheckpointSaverHook(
                 checkpoint_dir=FLAGS.model_dir,
                 save_steps=max(100, FLAGS.iterations_per_loop)))
+      '''
       if FLAGS.profile_every_n_steps > 0:
         hooks.append(
             tpu_profiler_hook.TPUProfilerHook(
                 save_steps=FLAGS.profile_every_n_steps,
                 output_dir=FLAGS.model_dir, tpu=FLAGS.tpu)
             )
+      '''
       resnet_classifier.train(
           input_fn=imagenet_train.input_fn,
           max_steps=FLAGS.train_steps,
