@@ -169,7 +169,7 @@ class ImageNetTFExampleInput(object):
     }
     #parsed = tf.parse_single_example(line, keys_to_features)
     label_parsed, prices_parsed = tf.parse_single_sequence_example(
-        serialized=serialized_example,
+        serialized=line,
         context_features=label_features,
         sequence_features=prices_features
     )
