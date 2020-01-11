@@ -34,7 +34,7 @@ import numpy as np
 import re
 
 import tensorflow.compat.v1 as tf
-#import tensorflow.compat.v2 as tf2
+import tensorflow.compat.v2 as tf2
 
 tf.disable_v2_behavior()
 
@@ -52,11 +52,9 @@ import resnet_model
 #from tensorflow.core.protobuf import rewriter_config_pb2
 #from tensorflow.python.estimator import estimator
 
-from tensorflow.compat.v1.contrib import summary
-from tensorflow.compat.v1.contrib.tpu.python.tpu import async_checkpoint
-from tensorflow.compat.v1.contrib.training.python.training import evaluation
-from tensorflow.compat.v1.core.protobuf import rewriter_config_pb2
-from tensorflow.compat.v1.python.estimator import estimator
+from tensorflow.compat.v2 import summary
+from tensorflow.core.protobuf import rewriter_config_pb2  # pylint: disable=g-direct-tensorflow-import
+#from tensorflow.compat.v1.python.estimator import estimator
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -843,7 +841,7 @@ def main(unused_argv):
   if FLAGS.mode == 'eval':
 
     # Run evaluation when there's a new checkpoint
-    for ckpt in evaluation.checkpoints_iterator(
+    for ckpt in tf.train.checkpoints_iterator(
         FLAGS.model_dir, timeout=FLAGS.eval_timeout):
       tf.logging.info('Starting to evaluate.')
       try:
@@ -872,7 +870,12 @@ def main(unused_argv):
             'Checkpoint %s no longer exists, skipping checkpoint', ckpt)
 
   else:   # FLAGS.mode == 'train' or FLAGS.mode == 'train_and_eval'
-    current_step = estimator._load_global_step_from_checkpoint_dir(FLAGS.model_dir)  # pylint: disable=protected-access,line-too-long
+    try:
+      current_step = tf.train.load_variable(FLAGS.model_dir,
+                                            tf.GraphKeys.GLOBAL_STEP)
+    except (TypeError, ValueError, tf.errors.NotFoundError):
+      current_step = 0
+    #current_step = estimator._load_global_step_from_checkpoint_dir(FLAGS.model_dir)  # pylint: disable=protected-access,line-too-long
     tf.logging.info('model_dir=%s,steps=%d' % (FLAGS.model_dir,current_step))
     steps_per_epoch = FLAGS.num_train_images // FLAGS.train_batch_size
 
@@ -887,6 +890,13 @@ def main(unused_argv):
     if FLAGS.mode == 'train':
       hooks = []
       if FLAGS.use_async_checkpointing:
+        try:
+          from tensorflow.contrib.tpu.python.tpu import async_checkpoint  # pylint: disable=g-import-not-at-top
+        except ImportError as e:
+          logging.exception(
+              'Async checkpointing is not supported in TensorFlow 2.x')
+          raise e
+
         hooks.append(
             async_checkpoint.AsyncCheckpointSaverHook(
                 checkpoint_dir=FLAGS.model_dir,
