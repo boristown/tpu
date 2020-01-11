@@ -30,8 +30,11 @@ from absl import app
 from absl import flags
 import absl.logging as _logging  # pylint: disable=unused-import
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
 import re
+
+import tensorflow.compat.v1 as tf
+#import tensorflow.compat.v2 as tf2
 
 #from common import tpu_profiler_hook
 #from official.resnet import imagenet_input2
@@ -40,11 +43,20 @@ import imagenet_input
 import lars_util
 #from official.resnet import resnet_model
 import resnet_model
-from tensorflow.contrib import summary
-from tensorflow.contrib.tpu.python.tpu import async_checkpoint
-from tensorflow.contrib.training.python.training import evaluation
-from tensorflow.core.protobuf import rewriter_config_pb2
-from tensorflow.python.estimator import estimator
+
+#from tensorflow.contrib import summary
+#from tensorflow.contrib.tpu.python.tpu import async_checkpoint
+#from tensorflow.contrib.training.python.training import evaluation
+#from tensorflow.core.protobuf import rewriter_config_pb2
+#from tensorflow.python.estimator import estimator
+
+from tensorflow.compat.v1.contrib import summary
+from tensorflow.compat.v1.contrib.tpu.python.tpu import async_checkpoint
+from tensorflow.compat.v1.contrib.training.python.training import evaluation
+from tensorflow.compat.v1.core.protobuf import rewriter_config_pb2
+from tensorflow.compat.v1.python.estimator import estimator
+
+tf.disable_v2_behavior()
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
