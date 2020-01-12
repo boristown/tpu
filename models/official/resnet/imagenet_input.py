@@ -144,6 +144,27 @@ class ImageNetTFExampleInput(object):
     prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices,operations
+  
+  def resize_axis(tensor, axis, new_size, fill_value=0):
+    tensor = tf.convert_to_tensor(tensor)
+    shape = tf.unstack(tf.shape(tensor))
+    
+    pad_shape = shape[:]
+    pad_shape[axis] = tf.maximum(0, new_size - shape[axis])
+
+    shape[axis] = tf.minimum(shape[axis], new_size)
+    shape = tf.stack(shape)
+
+    resized = tf.concat([
+        tf.slice(tensor, tf.zeros_like(shape), shape),
+        tf.fill(tf.stack(pad_shape), tf.cast(fill_value, tensor.dtype))
+    ], axis)
+  
+    # Update shape.
+    new_shape = tensor.get_shape().as_list()  # A copy is being made.
+    new_shape[axis] = new_size
+    resized.set_shape(new_shape)
+    return resized
 
   def dataset_parser_tfrecord(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
@@ -176,6 +197,14 @@ class ImageNetTFExampleInput(object):
     
     prices = prices_features['prices']
     label = label_features['label']
+    
+    max_frames = 20000
+    
+    reshaped_prices = tf.reshape(prices, [-1])
+
+    num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
+
+    prices_matrix = resize_axis(reshaped_prices, 0, max_frames, fill_value=0)
 
     '''
     if not self.use_bfloat16:
@@ -187,10 +216,11 @@ class ImageNetTFExampleInput(object):
     
     
     prices = tf.reshape(prices, [-1])
-    label = tf.reshape(label, [-1])
+    
     '''
-    tf.logging.info("prices=%s,labels=%s" % (prices,label))
-    return prices,label
+    label = tf.reshape(label, [-1])
+    tf.logging.info("prices=%s,labels=%s" % (prices_matrix,label))
+    return prices_matrix,label
   
     '''
     #prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
