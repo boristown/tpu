@@ -92,14 +92,16 @@ class ImageNetTFExampleInput(object):
     """Statically set the batch_size dimension."""
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
-          tf.TensorShape([None, None, None, batch_real_size])))
+          #tf.TensorShape([None, None, None, batch_real_size])))
+          tf.TensorShape([None, batch_real_size])))
       prices = tf.reshape(prices, [-1])
       operations.set_shape(operations.get_shape().merge_with(
           tf.TensorShape([None, batch_real_size])))
       operations = tf.reshape(operations, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
-          tf.TensorShape([batch_real_size, None, None, None])))
+          #tf.TensorShape([batch_real_size, None, None, None])))
+          tf.TensorShape([batch_real_size, None])))
       operations.set_shape(operations.get_shape().merge_with(
           tf.TensorShape([batch_real_size, None])))
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
@@ -110,11 +112,13 @@ class ImageNetTFExampleInput(object):
     """Statically set the batch_size dimension."""
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
-          tf.TensorShape([None, None, None, batch_size])))
+          #tf.TensorShape([None, None, None, batch_size])))
+          tf.TensorShape([None batch_size])))
       prices = tf.reshape(prices, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
-          tf.TensorShape([batch_size, None, None, None])))
+          #tf.TensorShape([batch_size, None, None, None])))
+          tf.TensorShape([batch_size, None])))
     tf.logging.info('prices.shape3=%s' % (prices.shape) )
     return prices
   
