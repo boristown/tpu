@@ -184,11 +184,11 @@ class ImageNetTFExampleInput(object):
     else:
       prices = tf.cast(prices, tf.bfloat16)
       label = tf.cast(label, tf.int32)
-    '''
     
-    #prices = tf.sparse.to_dense(prices) #20200109 SparseTensor To Dense
+    
     prices = tf.reshape(prices, [-1])
     label = tf.reshape(label, [-1])
+    '''
     tf.logging.info("prices=%s,labels=%s" % (prices,label))
     return prices,label
   
@@ -296,7 +296,8 @@ class ImageNetTFExampleInput(object):
     # Transpose for performance on TPU
     if self.transpose_input:
       dataset = dataset.map(
-          lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
+          #lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
+          lambda prices, operations: (tf.transpose(prices, [1, 0]), tf.transpose(operations, [1, 0])),
           num_parallel_calls=self.num_parallel_calls)
 
     # Assign static batch size dimension
@@ -354,7 +355,8 @@ class ImageNetTFExampleInput(object):
     # Transpose for performance on TPU
     if self.transpose_input:
       predict_dataset = predict_dataset.map(
-         lambda prices: tf.transpose(prices, [1, 2, 3, 0]),
+         #lambda prices: tf.transpose(prices, [1, 2, 3, 0]),
+         lambda prices: tf.transpose(prices, [1, 0]),
          num_parallel_calls=self.num_parallel_calls)
 
     # Assign static batch size dimension
