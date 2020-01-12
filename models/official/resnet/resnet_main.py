@@ -35,6 +35,7 @@ import re
 
 import tensorflow.compat.v1 as tf
 import tensorflow.compat.v2 as tf2
+import tensorflow_transform as tft
 
 tf.disable_v2_behavior()
 
@@ -453,7 +454,7 @@ def resnet_model_fn(features, labels, mode, params):
       trainingCount = labels[batchIndex] - priceInputCount
       if trainingCount > 0:
         for trainingIndex in Range(trainingCount):
-          trainingInputData = priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1]
+          trainingInputData = tft.scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
           trainingInputData = trainingInputData.reshape(-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT)
           trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData])
           trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData*-1.0+1.0])
