@@ -113,7 +113,7 @@ class ImageNetTFExampleInput(object):
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
           #tf.TensorShape([None, None, None, batch_size])))
-          tf.TensorShape([None batch_size])))
+          tf.TensorShape([None, batch_size])))
       prices = tf.reshape(prices, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
