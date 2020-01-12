@@ -200,11 +200,11 @@ class ImageNetTFExampleInput(object):
     
     max_frames = 20000
     
-    reshaped_prices = tf.reshape(prices, [-1])
+    #reshaped_prices = tf.reshape(prices, [-1])
 
-    num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
+    #num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
 
-    prices_matrix = resize_axis(reshaped_prices, 0, max_frames, fill_value=0)
+    prices_matrix = resize_axis(prices, 0, max_frames, fill_value=0)
 
     '''
     if not self.use_bfloat16:
