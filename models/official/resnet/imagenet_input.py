@@ -206,12 +206,14 @@ class ImageNetTFExampleInput(object):
     prices = prices_features['prices']
     label = label_features['label']
     
+    tf.logging.info("prices=%s,labels=%s" % (prices,label))
+    
     label = tf.reshape(label, [-1])
     reshaped_prices = tf.reshape(prices, [-1])
 
     #num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
 
-    prices_matrix = self.resize_axis(reshaped_prices, 0, max_frames, fill_value=0)
+    #prices_matrix = self.resize_axis(reshaped_prices, 0, max_frames, fill_value=0)
 
     '''
     if not self.use_bfloat16:
@@ -225,8 +227,7 @@ class ImageNetTFExampleInput(object):
     prices = tf.reshape(prices, [-1])
     
     '''
-    tf.logging.info("prices=%s,labels=%s" % (prices_matrix,label))
-    return prices_matrix,label
+    return reshaped_prices,label
   
     '''
     #prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
