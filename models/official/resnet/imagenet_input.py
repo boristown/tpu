@@ -179,10 +179,11 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
-    '''
+    fix_price_len = 10000
+    
     keys_to_features = {
-        #'prices' : tf.FixedLenFeature([PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT], tf.float32, default_value=[0.0]*(PRICE_COUNT*DIMENSION_COUNT*CHANNEL_COUNT)),
-        'prices' : tf.VarLenFeature(tf.float32),
+        'prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
+        #'prices' : tf.VarLenFeature(tf.float32),
         'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
     '''
@@ -196,35 +197,36 @@ class ImageNetTFExampleInput(object):
     prices_features = {
         "prices": tf.FixedLenSequenceFeature((), dtype=tf.float32)
     }
-    #parsed = tf.parse_single_example(line, keys_to_features)
+    '''
+    
+    parsed = tf.parse_single_example(line, keys_to_features)
+    
+    '''
     label_parsed, prices_parsed = tf.parse_single_sequence_example(
         serialized=line,
         context_features=label_features,
         sequence_features=prices_features
     )
+    '''
     
-    # Reshape non-sparse elements just once:
-
-    for k in label_features:
-      v = label_features[k]
-      if isinstance(v, tf.FixedLenFeature):
-        label_parsed[k] = tf.reshape(label_parsed[k], v.shape)
+    #prices = prices_features['prices']
+    #label = label_features['label']
+    
+    prices = parsed['prices']
+    label = parsed['label']
         
-    prices = prices_features['prices']
-    label = label_features['label']
-    
     #label = tf.sparse.to_dense(label)
     #prices = tf.sparse.to_dense(prices)
     tf.logging.info("prices=%s,labels=%s" % (prices,label))
     
     label = tf.reshape(label, [-1])
-    reshaped_prices = tf.reshape(prices, [-1])
+    prices = tf.reshape(prices, [-1])
 
     #num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
 
     #prices_matrix = self.resize_axis(reshaped_prices, 0, max_frames, fill_value=0)
 
-    '''
+    
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       label = tf.cast(label, tf.int32)
@@ -233,10 +235,10 @@ class ImageNetTFExampleInput(object):
       label = tf.cast(label, tf.int32)
     
     
-    prices = tf.reshape(prices, [-1])
+    #prices = tf.reshape(prices, [-1])
     
-    '''
-    return reshaped_prices,label
+    
+    return prices,label
   
     '''
     #prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
