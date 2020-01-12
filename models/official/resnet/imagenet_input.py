@@ -194,7 +194,7 @@ class ImageNetTFExampleInput(object):
         "label": tf.FixedLenFeature([], dtype=tf.int64)
     }
     prices_features = {
-        "prices": tf.FixedLenSequenceFeature([], dtype=tf.float32)
+        "prices": tf.FixedLenSequenceFeature((), dtype=tf.float32)
     }
     #parsed = tf.parse_single_example(line, keys_to_features)
     label_parsed, prices_parsed = tf.parse_single_sequence_example(
