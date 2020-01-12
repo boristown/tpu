@@ -145,7 +145,7 @@ class ImageNetTFExampleInput(object):
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices,operations
   
-  def resize_axis(tensor, axis, new_size, fill_value=0):
+  def resize_axis(self, tensor, axis, new_size, fill_value=0):
     tensor = tf.convert_to_tensor(tensor)
     shape = tf.unstack(tf.shape(tensor))
     
@@ -204,7 +204,7 @@ class ImageNetTFExampleInput(object):
 
     #num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
 
-    prices_matrix = resize_axis(prices, 0, max_frames, fill_value=0)
+    prices_matrix = self.resize_axis(prices, 0, max_frames, fill_value=0)
 
     '''
     if not self.use_bfloat16:
