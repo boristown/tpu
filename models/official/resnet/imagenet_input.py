@@ -203,6 +203,13 @@ class ImageNetTFExampleInput(object):
         sequence_features=prices_features
     )
     
+    # Reshape non-sparse elements just once:
+
+    for k in label_features:
+      v = label_features[k]
+      if isinstance(v, tf.FixedLenFeature):
+        label_parsed[k] = tf.reshape(label_parsed[k], v.shape)
+        
     prices = prices_features['prices']
     label = label_features['label']
     
