@@ -190,7 +190,7 @@ class ImageNetTFExampleInput(object):
         "label": tf.FixedLenFeature([], dtype=tf.int64)
     }
     prices_features = {
-        "prices": tf.FixedLenSequenceFeature([4,0], dtype=tf.float32)
+        "prices": tf.FixedLenSequenceFeature([], dtype=tf.float32)
     }
     #parsed = tf.parse_single_example(line, keys_to_features)
     label_parsed, prices_parsed = tf.parse_single_sequence_example(
@@ -202,6 +202,7 @@ class ImageNetTFExampleInput(object):
     prices = prices_features['prices']
     label = label_features['label']
     
+    label = tf.reshape(label, [-1])
     reshaped_prices = tf.reshape(prices, [-1])
 
     #num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
@@ -220,7 +221,6 @@ class ImageNetTFExampleInput(object):
     prices = tf.reshape(prices, [-1])
     
     '''
-    label = tf.reshape(label, [-1])
     tf.logging.info("prices=%s,labels=%s" % (prices_matrix,label))
     return prices_matrix,label
   
