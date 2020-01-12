@@ -176,13 +176,15 @@ class ImageNetTFExampleInput(object):
     
     prices = prices_features['prices']
     label = label_features['label']
-    
+
+    '''
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       label = tf.cast(label, tf.int32)
     else:
       prices = tf.cast(prices, tf.bfloat16)
       label = tf.cast(label, tf.int32)
+    '''
     
     #prices = tf.sparse.to_dense(prices) #20200109 SparseTensor To Dense
     prices = tf.reshape(prices, [-1])
