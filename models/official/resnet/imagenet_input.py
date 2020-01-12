@@ -206,6 +206,8 @@ class ImageNetTFExampleInput(object):
     prices = prices_features['prices']
     label = label_features['label']
     
+    label = tf.convert_to_tensor(label)
+    prices = tf.convert_to_tensor(prices)
     tf.logging.info("prices=%s,labels=%s" % (prices,label))
     
     label = tf.reshape(label, [-1])
