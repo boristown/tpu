@@ -191,7 +191,7 @@ class ImageNetTFExampleInput(object):
     
     
     label_features = {
-        "label": tf.FixedLenFeature([], dtype=tf.int64)
+        "label": tf.FixedLenFeature((), dtype=tf.int64)
     }
     prices_features = {
         "prices": tf.FixedLenSequenceFeature((), dtype=tf.float32)
