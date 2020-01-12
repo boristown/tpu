@@ -182,11 +182,15 @@ class ImageNetTFExampleInput(object):
         'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
     '''
+    
+    max_frames = 20000
+    
+    
     label_features = {
         "label": tf.FixedLenFeature([], dtype=tf.int64)
     }
     prices_features = {
-        "prices": tf.FixedLenSequenceFeature([], dtype=tf.float32)
+        "prices": tf.FixedLenSequenceFeature([max_frames], dtype=tf.float32)
     }
     #parsed = tf.parse_single_example(line, keys_to_features)
     label_parsed, prices_parsed = tf.parse_single_sequence_example(
@@ -197,8 +201,6 @@ class ImageNetTFExampleInput(object):
     
     prices = prices_features['prices']
     label = label_features['label']
-    
-    max_frames = 20000
     
     #reshaped_prices = tf.reshape(prices, [-1])
 
