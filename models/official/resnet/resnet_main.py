@@ -497,7 +497,8 @@ def resnet_model_fn(features, labels, mode, params):
     trainingInputSet, LabelSet = tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount)),make_training_set,skip_training_set)
           
   if FLAGS.precision == 'bfloat16':
-    with tf.contrib.tpu.bfloat16_scope():
+    #with tf.contrib.tpu.bfloat16_scope():
+    with tf.tpu.bfloat16_scope():
       #logits = build_network(features)
       #logits_mirror = build_network(features*-1.0+1.0)
       logits = build_network(trainingInputSet)
