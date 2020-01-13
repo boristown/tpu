@@ -490,10 +490,11 @@ def resnet_model_fn(features, labels, mode, params):
         trainingIndex = tf.add(trainingIndex, 1)
         return trainingIndex, trainingCount, trainingInputSet, LabelSet
       tf.while_loop(while_cond, while_body, [trainingIndex, trainingCount, trainingInputSet, LabelSet])
+      return trainingInputSet, LabelSet
     
     def skip_training_set():
-      return
-    tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount)),make_training_set,skip_training_set)
+      return trainingInputSet, LabelSet
+    trainingInputSet, LabelSet = tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount)),make_training_set,skip_training_set)
           
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
