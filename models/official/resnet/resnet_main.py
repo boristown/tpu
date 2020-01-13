@@ -571,7 +571,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
-      onehot_labels=LabelSet.Stack(),
+      onehot_labels=LabelSet.stack(),
       label_smoothing=FLAGS.label_smoothing)
 
   #cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
