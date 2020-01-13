@@ -465,19 +465,22 @@ def resnet_model_fn(features, labels, mode, params):
       trainingInputSet = tf.placeholder(tf.float32, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
   LabelSet = tf.placeholder(tf.int32, shape = [None, 2])
   batchCount = labels.shape[0]
+  
+
   for batchIndex in range(batchCount):
     priceList = features[batchIndex]
-    if labels[batchIndex] > tf.constant(priceInputCount):
+    def make_training_set():
+      #if labels[batchIndex] > tf.constant(priceInputCount):
       trainingCount = labels[batchIndex] - tf.constant(priceInputCount)
-      if trainingCount > tf.constant(0):
-        for trainingIndex in range(trainingCount):
-          trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
-          trainingInputData = trainingInputData.reshape(-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT)
-          trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData])
-          trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData*-1.0+1.0])
-          LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
-          LabelSet = tf.concat(0,[LabelSet, LabelData])
-          LabelSet = tf.concat(0,[LabelSet, LabelData*-1+1])
+      for trainingIndex in range(trainingCount):
+        trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
+        trainingInputData = trainingInputData.reshape(-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT)
+        trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData])
+        trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData*-1.0+1.0])
+        LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
+        LabelSet = tf.concat(0,[LabelSet, LabelData])
+        LabelSet = tf.concat(0,[LabelSet, LabelData*-1+1])
+    tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount)),make_training_set,None)
           
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
