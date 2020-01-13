@@ -462,9 +462,10 @@ def resnet_model_fn(features, labels, mode, params):
   priceInputCount = PRICE_COUNT * DIMENSION_COUNT * CHANNEL_COUNT
   if FLAGS.precision == 'bfloat16':
       trainingInputSet = tf.placeholder(tf.bfloat16, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+      LabelSet = tf.placeholder(tf.bfloat16, shape = [None, 2])
   else:
       trainingInputSet = tf.placeholder(tf.float32, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-  LabelSet = tf.placeholder(tf.int32, shape = [None, 2])
+      LabelSet = tf.placeholder(tf.float32, shape = [None, 2])
   batchCount = labels.shape[0]
   
 
@@ -483,7 +484,7 @@ def resnet_model_fn(features, labels, mode, params):
         trainingInputSet = tf.concat([trainingInputSet, trainingInputData],axis=0)
         trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0],axis=0)
         #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
-        LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.constant([[0 ,1]]), lambda: tf.constant([[1 ,0]]))
+        LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.constant([[0.0 ,1.0]]), lambda: tf.constant([[1.0 ,0.0]]))
         #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
         LabelSet = tf.concat([LabelSet, LabelData], axis=0)
         LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
