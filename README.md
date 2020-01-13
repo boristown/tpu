@@ -1,8 +1,6 @@
-# 算命猫ZeroAI #
+# AI Model for ZeroAI / AIEra #
 
 Forked from tensorflow/tpu by 唐博boristown 
-
-全球最好的L5级全自动交易AI，金融终结者。
 
 ## Cloud TPUs
 
