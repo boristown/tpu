@@ -96,16 +96,16 @@ class ImageNetTFExampleInput(object):
           tf.TensorShape([None, batch_real_size])))
       prices = tf.reshape(prices, [-1])
       operations.set_shape(operations.get_shape().merge_with(
-          #tf.TensorShape([None, batch_real_size])))
-          tf.TensorShape([batch_real_size])))
+          tf.TensorShape([None, batch_real_size])))
+          #tf.TensorShape([batch_real_size])))
       operations = tf.reshape(operations, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
           #tf.TensorShape([batch_real_size, None, None, None])))
           tf.TensorShape([batch_real_size, None])))
       operations.set_shape(operations.get_shape().merge_with(
-          #tf.TensorShape([batch_real_size, None])))
-          tf.TensorShape([batch_real_size])))
+          tf.TensorShape([batch_real_size, None])))
+          #tf.TensorShape([batch_real_size])))
     tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
     return prices, operations
 
