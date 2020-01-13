@@ -35,7 +35,7 @@ import re
 
 import tensorflow.compat.v1 as tf
 import tensorflow.compat.v2 as tf2
-import tensorflow_transform as tft
+#import tensorflow_transform as tft
 
 tf.disable_v2_behavior()
 
@@ -361,6 +361,21 @@ def label_mirror(labels):
   #shape:[Max_Case,Batch*2,Label_Class]
   return labels_combine
 
+def scale_to_0_1(x):
+  # x is your tensor
+  current_min = tf.reduce_min(x)
+  current_max = tf.reduce_max(x)
+  target_min = 0.0
+  target_max = 1.0
+  
+  if current_max == current_min:
+    return
+  # scale to [0; 1]
+  x = (x - current_min) / (current_max - current_min)
+
+  # scale to [target_min; target_max]
+  x = x * (target_max - target_min) + target_min
+
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
 
@@ -454,7 +469,7 @@ def resnet_model_fn(features, labels, mode, params):
       trainingCount = labels[batchIndex] - priceInputCount
       if trainingCount > 0:
         for trainingIndex in Range(trainingCount):
-          trainingInputData = tft.scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
+          trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
           trainingInputData = trainingInputData.reshape(-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT)
           trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData])
           trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData*-1.0+1.0])
