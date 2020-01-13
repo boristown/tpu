@@ -370,12 +370,13 @@ def scale_to_0_1(x):
   target_max = 1.0
   
   if current_max == current_min:
-    return
+    return x
   # scale to [0; 1]
   x = (x - current_min) / (current_max - current_min)
 
   # scale to [target_min; target_max]
   x = x * (target_max - target_min) + target_min
+  return x
 
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
