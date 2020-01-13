@@ -482,7 +482,7 @@ def resnet_model_fn(features, labels, mode, params):
   arrayindex = 0
   for batchIndex in range(batchCount):
     priceList = features[batchIndex]
-    def make_training_set(trainingInputSet, LabelSet):
+    def make_training_set(arrayindex, trainingInputSet, LabelSet):
       #if labels[batchIndex] > tf.constant(priceInputCount):
       trainingCount = labels[batchIndex] - tf.constant(priceInputCount, dtype=tf.float32)
       trainingIndex = tf.Variable(0, dtype=tf.float32)
@@ -512,9 +512,9 @@ def resnet_model_fn(features, labels, mode, params):
       arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet])
       return trainingInputSet, LabelSet
     
-    def skip_training_set(trainingInputSet, LabelSet):
+    def skip_training_set(arrayindex, trainingInputSet, LabelSet):
       return trainingInputSet, LabelSet
-    trainingInputSet, LabelSet = tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount,dtype=tf.float32)),lambda: make_training_set(trainingInputSet, LabelSet),lambda: skip_training_set(trainingInputSet, LabelSet))
+    trainingInputSet, LabelSet = tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount,dtype=tf.float32)),lambda: make_training_set(arrayindex, trainingInputSet, LabelSet),lambda: skip_training_set(arrayindex, trainingInputSet, LabelSet))
           
   if FLAGS.precision == 'bfloat16':
     #with tf.contrib.tpu.bfloat16_scope():
