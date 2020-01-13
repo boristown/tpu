@@ -186,7 +186,7 @@ class ImageNetTFExampleInput(object):
     keys_to_features = {
         'prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
         #'prices' : tf.VarLenFeature(tf.float32),
-        'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
+        'label': tf.FixedLenFeature([1], tf.int32, default_value=[0]),
     }
     '''
     
@@ -231,10 +231,10 @@ class ImageNetTFExampleInput(object):
     
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
-      label = tf.cast(label, tf.int32)
+      label = tf.cast(label, tf.float32)
     else:
       prices = tf.cast(prices, tf.bfloat16)
-      label = tf.cast(label, tf.int32)
+      label = tf.cast(label, tf.float32)
     
     
     #prices = tf.reshape(prices, [-1])
@@ -493,14 +493,14 @@ class ImageNetInput(ImageNetTFExampleInput):
     """See base class."""
     #raise Exception('This is dataset_parser in class ImageNetInput')
     if not self.data_dir:
-      return value, tf.constant(0, tf.int32)
+      return value, tf.constant(0, tf.float32)
     return super(ImageNetInput, self).dataset_parser(value)
     
   def dataset_parser_tfrecord(self, value):
     """See base class."""
     #raise Exception('This is dataset_parser in class ImageNetInput')
     if not self.data_dir:
-      return value, tf.constant(0, tf.int32)
+      return value, tf.constant(0, tf.float32)
     return super(ImageNetInput, self).dataset_parser_tfrecord(value)
 
   def dataset_predict_parser(self, value):
