@@ -462,14 +462,20 @@ def resnet_model_fn(features, labels, mode, params):
     return network(inputs=l_features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
   
   priceInputCount = PRICE_COUNT * DIMENSION_COUNT * CHANNEL_COUNT
-  
+  '''
   if FLAGS.precision == 'bfloat16':
       trainingInputSet = tf.placeholder(dtype=tf.bfloat16, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
       LabelSet = tf.placeholder(dtype=tf.bfloat16, shape = [None, 2])
   else:
       trainingInputSet = tf.placeholder(dtype=tf.float32, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
       LabelSet = tf.placeholder(dtype=tf.float32, shape = [None, 2])
-  
+  '''
+  if FLAGS.precision == 'bfloat16':
+    trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=0,dynamic_size=True)
+    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=0,dynamic_size=True)
+  else:
+    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=0,dynamic_size=True)
+    LabelSet = tf.TensorArray(dtype=tf.float32,size=0,dynamic_size=True)
     
   batchCount = labels.shape[0]
 
@@ -479,24 +485,30 @@ def resnet_model_fn(features, labels, mode, params):
       #if labels[batchIndex] > tf.constant(priceInputCount):
       trainingCount = labels[batchIndex] - tf.constant(priceInputCount, dtype=tf.float32)
       trainingIndex = tf.Variable(0, dtype=tf.float32)
-      def while_cond(trainingIndex, trainingCount, trainingInputSet, LabelSet):
+      arrayindex = 0
+      def while_cond(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
         return trainingIndex < trainingCount
-      def while_body(trainingIndex, trainingCount, trainingInputSet, LabelSet):
+      def while_body(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
         #for trainingIndex in range(trainingCount):
         trainingInputData = scale_to_0_1(priceList[tf.cast(trainingIndex, dtype=tf.int32):tf.cast(trainingIndex+priceInputCount, dtype=tf.int32):1][-1::-1])
         trainingInputData = tf.reshape(trainingInputData, [-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-        trainingInputSet = tf.concat([trainingInputSet, trainingInputData], axis=0)
-        trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0], axis=0)
+        #trainingInputSet = tf.concat([trainingInputSet, trainingInputData], axis=0)
+        #trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0], axis=0)
+        trainingInputSet.write(arrayindex, trainingInputData)
+        trainingInputSet.write(arrayindex, trainingInputData*-1.0+1.0)
         #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
         if FLAGS.precision == 'bfloat16':
           LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([[0.0 ,1.0]], dtype=tf.bfloat16), lambda: tf.constant([[1.0 ,0.0]], dtype=tf.bfloat16))
         else:
           LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([[0.0 ,1.0]], dtype=tf.float32), lambda: tf.constant([[1.0 ,0.0]], dtype=tf.float32))
         #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
-        LabelSet = tf.concat([LabelSet, LabelData], axis=0)
-        LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
+        #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
+        #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
+        LabelSet.write(arrayindex, LabelData)
+        LabelSet.write(arrayindex, LabelData*-1+1)
         trainingIndex = tf.add(trainingIndex, 1)
-        return trainingIndex, trainingCount, trainingInputSet, LabelSet
+        arrayindex += 1
+        return arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet
       trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [trainingIndex, trainingCount, trainingInputSet, LabelSet])
       return trainingInputSet, LabelSet
     
@@ -509,11 +521,11 @@ def resnet_model_fn(features, labels, mode, params):
     with tf.tpu.bfloat16_scope():
       #logits = build_network(features)
       #logits_mirror = build_network(features*-1.0+1.0)
-      logits = build_network(trainingInputSet)
+      logits = build_network(trainingInputSet.stack())
   elif FLAGS.precision == 'float32':
     #logits = build_network(features)
     #logits_mirror = build_network(features*-1.0+1.0)
-    logits = build_network(trainingInputSet)
+    logits = build_network(trainingInputSet.stack())
   
   logits = tf.cast(logits, tf.float32)
   #logits_mirror = tf.cast(logits_mirror, tf.float32)
@@ -559,7 +571,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
-      onehot_labels=LabelSet,
+      onehot_labels=LabelSet.Stack(),
       label_smoothing=FLAGS.label_smoothing)
 
   #cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
@@ -682,7 +694,7 @@ def resnet_model_fn(features, labels, mode, params):
   eval_metrics = None
   if mode == tf.estimator.ModeKeys.EVAL:
     #def metric_fn(labels, labels_mirror, logits, logits_mirror):
-    def metric_fn(labels, logits):
+    def metric_fn(LabelSet, logits):
       """Evaluation metric function. Evaluates accuracy.
 
       This function is executed on the CPU and should not directly reference
@@ -720,7 +732,7 @@ def resnet_model_fn(features, labels, mode, params):
       #    predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
 
       top_accuracys = tf.metrics.mean(
-        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+        tf.cast(tf.nn.in_top_k(tf.cast(LabelSet.stack(),tf.float32), 
         predictions, 1), tf.float32))
     
       #top_accuracys_mirror = tf.metrics.mean(
@@ -752,7 +764,7 @@ def resnet_model_fn(features, labels, mode, params):
       }
 
     #eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
-    eval_metrics = (metric_fn, [labels, logits])
+    eval_metrics = (metric_fn, [LabelSet, logits])
 
   #return tf.contrib.tpu.TPUEstimatorSpec(
   return tf.estimator.tpu.TPUEstimatorSpec(
