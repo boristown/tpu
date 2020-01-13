@@ -479,7 +479,7 @@ def resnet_model_fn(features, labels, mode, params):
       def while_body(trainingIndex, trainingCount):
         #for trainingIndex in range(trainingCount):
         trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
-        trainingInputData = trainingInputData.reshape(-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT)
+        trainingInputData = tf.reshape(trainingInputData，[-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
         trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData])
         trainingInputSet = tf.concat(0,[trainingInputSet, trainingInputData*-1.0+1.0])
         LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
