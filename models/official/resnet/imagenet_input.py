@@ -186,7 +186,7 @@ class ImageNetTFExampleInput(object):
     keys_to_features = {
         'prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
         #'prices' : tf.VarLenFeature(tf.float32),
-        'label': tf.FixedLenFeature([1], tf.int32, default_value=[0]),
+        'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
     '''
     
