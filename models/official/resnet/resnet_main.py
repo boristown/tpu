@@ -69,6 +69,7 @@ LABEL_COUNT = 2
 #PREDICT_BATCH_SIZE = 31
 #MAX_CASE = 10
 GROUP_COUNT = 4
+price_list_len = 10000
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
@@ -407,6 +408,7 @@ def resnet_model_fn(features, labels, mode, params):
   #if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
   if FLAGS.transpose_input:
     #features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
+    features = tf.reshape(features, [price_list_len, -1])
     #features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
     features = tf.transpose(features, [1, 0])  # PN to NP
     if mode != tf.estimator.ModeKeys.PREDICT:
