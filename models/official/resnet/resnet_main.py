@@ -509,7 +509,7 @@ def resnet_model_fn(features, labels, mode, params):
         trainingIndex = tf.add(trainingIndex, 1)
         arrayindex += 1
         return arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet
-      trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [trainingIndex, trainingCount, trainingInputSet, LabelSet])
+      arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet])
       return trainingInputSet, LabelSet
     
     def skip_training_set(trainingInputSet, LabelSet):
