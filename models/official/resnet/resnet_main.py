@@ -467,9 +467,9 @@ def resnet_model_fn(features, labels, mode, params):
   batchCount = labels.shape[0]
   for batchIndex in range(batchCount):
     priceList = features[batchIndex]
-    if labels[batchIndex] > priceInputCount:
-      trainingCount = labels[batchIndex] - priceInputCount
-      if trainingCount > 0:
+    if labels[batchIndex] > tf.constant(priceInputCount):
+      trainingCount = labels[batchIndex] - tf.constant(priceInputCount)
+      if trainingCount > tf.constant(0):
         for trainingIndex in range(trainingCount):
           trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
           trainingInputData = trainingInputData.reshape(-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT)
