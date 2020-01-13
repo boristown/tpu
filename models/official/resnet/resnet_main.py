@@ -748,7 +748,8 @@ def resnet_model_fn(features, labels, mode, params):
     #eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
     eval_metrics = (metric_fn, [labels, logits])
 
-  return tf.contrib.tpu.TPUEstimatorSpec(
+  #return tf.contrib.tpu.TPUEstimatorSpec(
+  return tf.estimator.tpu.TPUEstimatorSpec(
       mode=mode,
       loss=loss,
       train_op=train_op,
