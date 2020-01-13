@@ -482,11 +482,12 @@ def resnet_model_fn(features, labels, mode, params):
         trainingInputData = tf.reshape(trainingInputData, [-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
         trainingInputSet = tf.concat([trainingInputSet, trainingInputData],axis=0)
         trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0],axis=0)
-        LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.constant([[0 ,1]]), lambda: tf.constant([[1 ,0]]))
+        LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
         #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
         LabelSet = tf.concat([LabelSet, LabelData], axis=0)
         LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
         trainingIndex = tf.add(trainingIndex, 1)
+        return trainingIndex, trainingCount, trainingInputSet, LabelSet
       tf.while_loop(while_cond, while_body, [trainingIndex, trainingCount, trainingInputSet, LabelSet])
     
     def skip_training_set():
