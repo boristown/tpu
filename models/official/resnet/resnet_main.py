@@ -473,7 +473,7 @@ def resnet_model_fn(features, labels, mode, params):
     priceList = features[batchIndex]
     def make_training_set(trainingInputSet, LabelSet):
       #if labels[batchIndex] > tf.constant(priceInputCount):
-      trainingCount = labels[batchIndex] - tf.constant(priceInputCount)
+      trainingCount = labels[batchIndex] - tf.constant(priceInputCount, dtype=tf.float32)
       trainingIndex = tf.Variable(0, name='loop_i')
       def while_cond(trainingIndex, trainingCount, trainingInputSet, LabelSet):
         return trainingIndex < trainingCount
