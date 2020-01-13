@@ -474,9 +474,9 @@ def resnet_model_fn(features, labels, mode, params):
       #if labels[batchIndex] > tf.constant(priceInputCount):
       trainingCount = labels[batchIndex] - tf.constant(priceInputCount)
       trainingIndex = tf.Variable(0, name='loop_i')
-      def while_cond(trainingIndex, trainingCount):
+      def while_cond(trainingIndex, trainingCount, trainingInputSet, LabelSet):
         return trainingIndex < trainingCount
-      def while_body(trainingIndex, trainingCount):
+      def while_body(trainingIndex, trainingCount, trainingInputSet, LabelSet):
         #for trainingIndex in range(trainingCount):
         trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
         trainingInputData = tf.reshape(trainingInputData, [-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
@@ -486,7 +486,7 @@ def resnet_model_fn(features, labels, mode, params):
         LabelSet = tf.concat(0,[LabelSet, LabelData])
         LabelSet = tf.concat(0,[LabelSet, LabelData*-1+1])
         trainingIndex = tf.add(trainingIndex, 1)
-      tf.while_loop(while_cond, while_body, [trainingIndex, trainingCount])
+      tf.while_loop(while_cond, while_body, [trainingIndex, trainingCount, trainingInputSet, LabelSet])
     
     def skip_training_set():
       return
