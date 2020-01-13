@@ -657,7 +657,7 @@ def resnet_model_fn(features, labels, mode, params):
             #summary.scalar('learning_rate', lr[0], step=gs)
             #summary.scalar('current_epoch', ce[0], step=gs)
 
-            return summary.all_summary_ops()
+            return tf.summary.all_v2_summary_ops()
 
       # To log the loss, current learning rate, and epoch for Tensorboard, the
       # summary op needs to be run on the host CPU via host_call. host_call
