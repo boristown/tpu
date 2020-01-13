@@ -464,11 +464,11 @@ def resnet_model_fn(features, labels, mode, params):
   priceInputCount = PRICE_COUNT * DIMENSION_COUNT * CHANNEL_COUNT
   
   if FLAGS.precision == 'bfloat16':
-      trainingInputSet = tf.placeholder(dtype=tf.bfloat16, shape = [price_list_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-      LabelSet = tf.placeholder(dtype=tf.bfloat16, shape = [price_list_len, 2])
+      trainingInputSet = tf.placeholder(dtype=tf.bfloat16, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+      LabelSet = tf.placeholder(dtype=tf.bfloat16, shape = [None, 2])
   else:
-      trainingInputSet = tf.placeholder(dtype=tf.float32, shape = [price_list_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-      LabelSet = tf.placeholder(dtype=tf.float32, shape = [price_list_len, 2])
+      trainingInputSet = tf.placeholder(dtype=tf.float32, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+      LabelSet = tf.placeholder(dtype=tf.float32, shape = [None, 2])
   
     
   batchCount = labels.shape[0]
