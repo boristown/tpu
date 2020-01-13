@@ -480,7 +480,9 @@ def resnet_model_fn(features, labels, mode, params):
         LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
         LabelSet = tf.concat(0,[LabelSet, LabelData])
         LabelSet = tf.concat(0,[LabelSet, LabelData*-1+1])
-    tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount)),make_training_set)
+    def skip_training_set():
+      return
+    tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount)),make_training_set,skip_training_set)
           
   if FLAGS.precision == 'bfloat16':
     with tf.contrib.tpu.bfloat16_scope():
