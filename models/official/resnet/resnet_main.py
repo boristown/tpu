@@ -491,16 +491,16 @@ def resnet_model_fn(features, labels, mode, params):
       def while_body(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
         #for trainingIndex in range(trainingCount):
         trainingInputData = scale_to_0_1(priceList[tf.cast(trainingIndex, dtype=tf.int32):tf.cast(trainingIndex+priceInputCount, dtype=tf.int32):1][-1::-1])
-        trainingInputData = tf.reshape(trainingInputData, [-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+        trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
         #trainingInputSet = tf.concat([trainingInputSet, trainingInputData], axis=0)
         #trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0], axis=0)
         trainingInputSet.write(arrayindex, trainingInputData)
         trainingInputSet.write(arrayindex, trainingInputData*-1.0+1.0)
         #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
         if FLAGS.precision == 'bfloat16':
-          LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([[0.0 ,1.0]], dtype=tf.bfloat16), lambda: tf.constant([[1.0 ,0.0]], dtype=tf.bfloat16))
+          LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.bfloat16), lambda: tf.constant([1.0 ,0.0], dtype=tf.bfloat16))
         else:
-          LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([[0.0 ,1.0]], dtype=tf.float32), lambda: tf.constant([[1.0 ,0.0]], dtype=tf.float32))
+          LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.float32), lambda: tf.constant([1.0 ,0.0], dtype=tf.float32))
         #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
         #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
         #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
