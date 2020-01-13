@@ -347,8 +347,8 @@ class ImageNetTFExampleInput(object):
     if self.transpose_input:
       dataset = dataset.map(
           #lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
-          #lambda prices, operations: (tf.transpose(prices, [1, 0]), tf.transpose(operations, [1, 0])),
-          lambda prices, operations: (tf.transpose(prices, [1, 0]), operations),
+          lambda prices, operations: (tf.transpose(prices, [1, 0]), tf.transpose(operations, [1, 0])),
+          #lambda prices, operations: (tf.transpose(prices, [1, 0]), operations),
           num_parallel_calls=self.num_parallel_calls)
       
 
