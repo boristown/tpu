@@ -396,6 +396,8 @@ def resnet_model_fn(features, labels, mode, params):
   if isinstance(features, dict):
     features = features['feature']
   
+  price_list_len = 10000
+  
   # Insert Loop Code From Here Boris Town 20200109
     
   # In most cases, the default data format NCHW instead of NHWC should be
@@ -460,14 +462,16 @@ def resnet_model_fn(features, labels, mode, params):
     return network(inputs=l_features, is_training=(mode == tf.estimator.ModeKeys.TRAIN))
   
   priceInputCount = PRICE_COUNT * DIMENSION_COUNT * CHANNEL_COUNT
-  if FLAGS.precision == 'bfloat16':
-      trainingInputSet = tf.placeholder(tf.bfloat16, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-      LabelSet = tf.placeholder(tf.bfloat16, shape = [None, 2])
-  else:
-      trainingInputSet = tf.placeholder(tf.float32, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-      LabelSet = tf.placeholder(tf.float32, shape = [None, 2])
-  batchCount = labels.shape[0]
   
+  if FLAGS.precision == 'bfloat16':
+      trainingInputSet = tf.placeholder(dtype=tf.bfloat16, shape = [price_list_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+      LabelSet = tf.placeholder(dtype=tf.bfloat16, shape = [price_list_len, 2])
+  else:
+      trainingInputSet = tf.placeholder(dtype=tf.float32, shape = [price_list_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+      LabelSet = tf.placeholder(dtype=tf.float32, shape = [price_list_len, 2])
+  
+    
+  batchCount = labels.shape[0]
 
   for batchIndex in range(batchCount):
     priceList = features[batchIndex]
