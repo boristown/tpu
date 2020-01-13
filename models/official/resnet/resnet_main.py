@@ -479,10 +479,10 @@ def resnet_model_fn(features, labels, mode, params):
         return trainingIndex < trainingCount
       def while_body(trainingIndex, trainingCount, trainingInputSet, LabelSet):
         #for trainingIndex in range(trainingCount):
-        trainingInputData = scale_to_0_1(priceList[tf.cast(tf.int32, trainingIndex):tf.cast(tf.int32, trainingIndex+priceInputCount):1][-1::-1])
+        trainingInputData = scale_to_0_1(priceList[tf.cast(trainingIndex, dtype=tf.int32):tf.cast(trainingIndex+priceInputCount, dtype=tf.int32):1][-1::-1])
         trainingInputData = tf.reshape(trainingInputData, [-1, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-        trainingInputSet = tf.concat([trainingInputSet, trainingInputData],axis=0)
-        trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0],axis=0)
+        trainingInputSet = tf.concat([trainingInputSet, trainingInputData], axis=0)
+        trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0], axis=0)
         #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
         if FLAGS.precision == 'bfloat16':
           LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.constant([[0.0 ,1.0]], dtype=tf.bfloat16), lambda: tf.constant([[1.0 ,0.0]], dtype=tf.bfloat16))
