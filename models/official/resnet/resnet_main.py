@@ -570,7 +570,8 @@ def resnet_model_fn(features, labels, mode, params):
   #    [tf.nn.l2_loss(v) for v in tf.trainable_variables()
   #     if 'batch_normalization' not in v.name])
 
-  loss = cross_entropy + cross_entropy_mirror + FLAGS.weight_decay * tf.add_n(
+  #loss = cross_entropy + cross_entropy_mirror + FLAGS.weight_decay * tf.add_n(
+  loss = cross_entropy + FLAGS.weight_decay * tf.add_n(
       [tf.nn.l2_loss(v) for v in tf.trainable_variables()
        if 'batch_normalization' not in v.name])
     
