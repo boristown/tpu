@@ -472,11 +472,11 @@ def resnet_model_fn(features, labels, mode, params):
       LabelSet = tf.placeholder(dtype=tf.float32, shape = [None, 2])
   '''
   if FLAGS.precision == 'bfloat16':
-    trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False)
-    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False)
+    trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
   else:
-    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False)
-    LabelSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False)
+    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[2])
+    LabelSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[2])
     
   batchCount = labels.shape[0]
 
@@ -496,7 +496,7 @@ def resnet_model_fn(features, labels, mode, params):
         #trainingInputSet = tf.concat([trainingInputSet, trainingInputData], axis=0)
         #trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0], axis=0)
         trainingInputSet.write(arrayindex, trainingInputData)
-        trainingInputSet.write(arrayindex, trainingInputData*-1.0+1.0)
+        trainingInputSet.write(arrayindex+1, trainingInputData*-1.0+1.0)
         #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
         if FLAGS.precision == 'bfloat16':
           LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.bfloat16), lambda: tf.constant([1.0 ,0.0], dtype=tf.bfloat16))
@@ -506,9 +506,9 @@ def resnet_model_fn(features, labels, mode, params):
         #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
         #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
         LabelSet.write(arrayindex, LabelData)
-        LabelSet.write(arrayindex, LabelData*-1+1)
+        LabelSet.write(arrayindex+1, LabelData*-1+1)
         trainingIndex = tf.add(trainingIndex, 1)
-        arrayindex += 1
+        arrayindex += 2
         return arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet
       arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet], maximum_iterations=max_batch_len)
       return trainingInputSet, LabelSet
