@@ -397,7 +397,7 @@ def resnet_model_fn(features, labels, mode, params):
     features = features['feature']
   
   price_list_len = 10000
-  max_batch_len = 1000
+  max_batch_len = 10000
 
   # Insert Loop Code From Here Boris Town 20200109
     
