@@ -21,7 +21,12 @@ import datetime
 from absl import app
 from absl import flags
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+
+import tensorflow.compat.v2 as tf2
+
+
+tf.disable_v2_behavior()
 
 FLAGS = flags.FLAGS
 
