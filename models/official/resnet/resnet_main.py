@@ -473,9 +473,9 @@ def resnet_model_fn(features, labels, mode, params):
   '''
   if FLAGS.precision == 'bfloat16':
     trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[2])
   else:
-    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[2])
+    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
     LabelSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[2])
     
   batchCount = labels.shape[0]
