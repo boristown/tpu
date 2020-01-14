@@ -509,7 +509,7 @@ def resnet_model_fn(features, labels, mode, params):
         LabelSet.write(arrayindex+1, LabelData*-1+1)
         trainingIndex = tf.add(trainingIndex, 1)
         arrayindex += 2
-        return arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet
+        return [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet]
       arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet], maximum_iterations=max_batch_len)
       return trainingInputSet, LabelSet
     
