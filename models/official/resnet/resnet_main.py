@@ -397,7 +397,8 @@ def resnet_model_fn(features, labels, mode, params):
     features = features['feature']
   
   price_list_len = 10000
-  
+  max_batch_len = 1000
+
   # Insert Loop Code From Here Boris Town 20200109
     
   # In most cases, the default data format NCHW instead of NHWC should be
@@ -471,11 +472,11 @@ def resnet_model_fn(features, labels, mode, params):
       LabelSet = tf.placeholder(dtype=tf.float32, shape = [None, 2])
   '''
   if FLAGS.precision == 'bfloat16':
-    trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=price_list_len,dynamic_size=False)
-    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=price_list_len,dynamic_size=False)
+    trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False)
+    LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False)
   else:
-    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=price_list_len,dynamic_size=False)
-    LabelSet = tf.TensorArray(dtype=tf.float32,size=price_list_len,dynamic_size=False)
+    trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False)
+    LabelSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False)
     
   batchCount = labels.shape[0]
 
@@ -487,7 +488,7 @@ def resnet_model_fn(features, labels, mode, params):
       trainingCount = labels[batchIndex] - tf.constant(priceInputCount, dtype=tf.float32)
       trainingIndex = tf.Variable(0, dtype=tf.float32)
       def while_cond(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
-        return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < price_list_len)
+        return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len)
       def while_body(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
         #for trainingIndex in range(trainingCount):
         trainingInputData = scale_to_0_1(priceList[tf.cast(trainingIndex, dtype=tf.int32):tf.cast(trainingIndex+priceInputCount, dtype=tf.int32):1][-1::-1])
@@ -509,7 +510,7 @@ def resnet_model_fn(features, labels, mode, params):
         trainingIndex = tf.add(trainingIndex, 1)
         arrayindex += 1
         return arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet
-      arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet])
+      arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet], maximum_iterations=max_batch_len)
       return trainingInputSet, LabelSet
     
     def skip_training_set(arrayindex, trainingInputSet, LabelSet):
