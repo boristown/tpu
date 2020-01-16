@@ -481,11 +481,11 @@ def resnet_model_fn(features, labels, mode, params):
   '''
     
   if FLAGS.precision == 'bfloat16':
-    labeltensor = tf.Variable(tf.zeros([max_batch_len, 2], dtype=tf.bfloat16))
-    pricestensor = tf.Variable(tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.bfloat16))
+    labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.bfloat16)
+    pricestensor = tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.bfloat16)
   else:
-    labeltensor = tf.Variable(tf.zeros([max_batch_len, 2], dtype=tf.float32))
-    pricestensor = tf.Variable(tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.float32))
+    labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.float32)
+    pricestensor = tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.float32)
     
   batchCount = labels.shape[0]
 
