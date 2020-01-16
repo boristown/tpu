@@ -617,7 +617,7 @@ def resnet_model_fn(features, labels, mode, params):
   loss = cross_entropy + FLAGS.weight_decay * tf.add_n([
       tf.nn.l2_loss(v) 
       for v in tf.trainable_variables()
-      if 'batch_normalization' not in v.name
+      if 'batch_normalization' not in v.name and v.dtype is not tf.int32 and v.dtype is not tf.int64
   ])
     
   host_call = None
