@@ -397,7 +397,8 @@ def resnet_model_fn(features, labels, mode, params):
     features = features['feature']
   
   price_list_len = 10000
-  max_batch_len = 10000
+  max_batch_len = 20000
+  max_batch_len_tensor = tf.Variable(max_batch_len, dtype=tf.int32)
 
   # Insert Loop Code From Here Boris Town 20200109
     
@@ -470,33 +471,47 @@ def resnet_model_fn(features, labels, mode, params):
   else:
       trainingInputSet = tf.placeholder(dtype=tf.float32, shape = [None, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
       LabelSet = tf.placeholder(dtype=tf.float32, shape = [None, 2])
-  '''
+  
   if FLAGS.precision == 'bfloat16':
     trainingInputSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
     LabelSet = tf.TensorArray(dtype=tf.bfloat16,size=max_batch_len,dynamic_size=False,element_shape=[2])
   else:
     trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
     LabelSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[2])
+  '''
+    
+  if FLAGS.precision == 'bfloat16':
+    labeltensor = tf.Variable(tf.zeros([max_batch_len, 2], dtype=tf.bfloat16))
+    pricestensor = tf.Variable(tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.bfloat16))
+  else:
+    labeltensor = tf.Variable(tf.zeros([max_batch_len, 2], dtype=tf.float32))
+    pricestensor = tf.Variable(tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.float32))
     
   batchCount = labels.shape[0]
 
-  arrayindex = 0
+  arrayindex = tf.Variable(0, dtype=tf.int64)
   for batchIndex in range(batchCount):
     priceList = features[batchIndex]
-    def make_training_set(arrayindex, trainingInputSet, LabelSet):
+    def make_training_set(arrayindex, labeltensor, pricestensor):
       #if labels[batchIndex] > tf.constant(priceInputCount):
-      trainingCount = labels[batchIndex] - tf.constant(priceInputCount, dtype=tf.float32)
-      trainingIndex = tf.Variable(0, dtype=tf.float32)
-      def while_cond(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
-        return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len)
-      def while_body(arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet):
+      trainingCount = labels[batchIndex] - tf.constant(priceInputCount, dtype=tf.int64)
+      trainingIndex = tf.Variable(0, dtype=tf.int64)
+      def while_cond(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
+        return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len_tensor)
+      def while_body(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
         #for trainingIndex in range(trainingCount):
-        trainingInputData = scale_to_0_1(priceList[tf.cast(trainingIndex, dtype=tf.int32):tf.cast(trainingIndex+priceInputCount, dtype=tf.int32):1][-1::-1])
+        trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
         trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-        #trainingInputSet = tf.concat([trainingInputSet, trainingInputData], axis=0)
-        #trainingInputSet = tf.concat([trainingInputSet, trainingInputData*-1.0+1.0], axis=0)
-        trainingInputSet.write(arrayindex, trainingInputData)
-        trainingInputSet.write(arrayindex+1, trainingInputData*-1.0+1.0)
+
+
+        pricestensorpart1 = pricestensor[:arrayindex]
+        pricestensorpart2 = pricestensor[arrayindex+2:]
+        pricesvar = tf.concat([[trainingInputData],[trainingInputData*-1+1]], axis=0)
+        new_pricestensor = tf.concat([pricestensorpart1,pricesvar,pricestensorpart2], axis=0)
+        new_pricestensor = tf.reshape(new_pricestensor, pricestensor.shape)
+        
+        #trainingInputSet.write(arrayindex, trainingInputData)
+        #trainingInputSet.write(arrayindex+1, trainingInputData*-1.0+1.0)
         #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
         if FLAGS.precision == 'bfloat16':
           LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.bfloat16), lambda: tf.constant([1.0 ,0.0], dtype=tf.bfloat16))
@@ -505,28 +520,35 @@ def resnet_model_fn(features, labels, mode, params):
         #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
         #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
         #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
-        LabelSet.write(arrayindex, LabelData)
-        LabelSet.write(arrayindex+1, LabelData*-1+1)
+        
+        labeltensorpart1 = labeltensor[:arrayindex]
+        labeltensorpart2 = labeltensor[arrayindex+2:]
+        labelvar = tf.concat([[LabelData],[LabelData*-1+1]], axis=0)
+        new_labeltensor = tf.concat([labeltensorpart1,labelvar,labeltensorpart2], axis=0)
+        new_labeltensor = tf.reshape(new_labeltensor, labeltensor.shape)
+        
+        #LabelSet.write(arrayindex, LabelData)
+        #LabelSet.write(arrayindex+1, LabelData*-1+1)
         trainingIndex = tf.add(trainingIndex, 1)
         arrayindex += 2
-        return [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet]
-      arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, trainingInputSet, LabelSet], maximum_iterations=max_batch_len)
-      return trainingInputSet, LabelSet
+        return [arrayindex, trainingIndex, trainingCount, new_labeltensor, new_pricestensor]
+      arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
+      return arrayindex, labeltensor, pricestensor
     
-    def skip_training_set(arrayindex, trainingInputSet, LabelSet):
-      return trainingInputSet, LabelSet
-    trainingInputSet, LabelSet = tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount,dtype=tf.float32)),lambda: make_training_set(arrayindex, trainingInputSet, LabelSet),lambda: skip_training_set(arrayindex, trainingInputSet, LabelSet))
+    def skip_training_set(arrayindex, labeltensor, pricestensor):
+      return arrayindex, labeltensor, pricestensor
+    arrayindex, labeltensor, pricestensor = tf.cond(tf.greater(labels[batchIndex],tf.constant(priceInputCount,dtype=tf.float32)),lambda: make_training_set(arrayindex, labeltensor, pricestensor),lambda: skip_training_set(arrayindex, labeltensor, pricestensor))
           
   if FLAGS.precision == 'bfloat16':
     #with tf.contrib.tpu.bfloat16_scope():
     with tf.tpu.bfloat16_scope():
       #logits = build_network(features)
       #logits_mirror = build_network(features*-1.0+1.0)
-      logits = build_network(trainingInputSet.stack())
+      logits = build_network(pricestensor[:arrayindex])
   elif FLAGS.precision == 'float32':
     #logits = build_network(features)
     #logits_mirror = build_network(features*-1.0+1.0)
-    logits = build_network(trainingInputSet.stack())
+    logits = build_network(pricestensor[:arrayindex])
   
   logits = tf.cast(logits, tf.float32)
   #logits_mirror = tf.cast(logits_mirror, tf.float32)
@@ -572,7 +594,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
-      onehot_labels=LabelSet.stack(),
+      onehot_labels=labeltensor[:arrayindex],
       label_smoothing=FLAGS.label_smoothing)
 
   #cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
@@ -765,7 +787,7 @@ def resnet_model_fn(features, labels, mode, params):
       }
 
     #eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
-    eval_metrics = (metric_fn, [LabelSet.stack(), logits])
+    eval_metrics = (metric_fn, [labeltensor[:arrayindex], logits])
 
   #return tf.contrib.tpu.TPUEstimatorSpec(
   return tf.estimator.tpu.TPUEstimatorSpec(
