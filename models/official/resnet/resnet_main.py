@@ -505,7 +505,7 @@ def resnet_model_fn(features, labels, mode, params):
 
         #pricestensorpart1 = pricestensor[:arrayindex]
         #pricestensorpart2 = pricestensor[arrayindex+2:]
-        pricesvar = tf.concat([[trainingInputData],[trainingInputData*-1+1]], axis=0)
+        #pricesvar = tf.concat([[trainingInputData],[trainingInputData*-1+1]], axis=0)
         new_pricestensor = tf.reshape(tf.concat(
             [pricestensor[:arrayindex],[trainingInputData],[trainingInputData*-1+1],pricestensor[arrayindex+2:]], axis=0),
             pricestensor.shape)
@@ -524,7 +524,8 @@ def resnet_model_fn(features, labels, mode, params):
         
         #labeltensorpart1 = labeltensor[:arrayindex]
         #labeltensorpart2 = labeltensor[arrayindex+2:]
-        labelvar = tf.concat([[LabelData],[LabelData*-1+1]], axis=0)
+        #labelvar = tf.concat([[LabelData],[LabelData*-1+1]], axis=0)
+        LabelData = tf.reshape(LabelData, [2])
         new_labeltensor = tf.reshape(tf.concat(
             [labeltensor[:arrayindex],[LabelData],[LabelData*-1+1],labeltensor[arrayindex+2:]], axis=0),
             labeltensor.shape)
