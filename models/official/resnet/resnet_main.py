@@ -508,7 +508,7 @@ def resnet_model_fn(features, labels, mode, params):
         pricesvar = tf.concat([[trainingInputData],[trainingInputData*-1+1]], axis=0)
         new_pricestensor = tf.reshape(tf.concat(
             [pricestensor[:arrayindex],[trainingInputData],[trainingInputData*-1+1],pricestensor[arrayindex+2:]], axis=0),
-            pricetensor.shape)
+            pricestensor.shape)
         #new_pricestensor = tf.reshape(new_pricestensor, pricestensor.shape)
         
         #trainingInputSet.write(arrayindex, trainingInputData)
@@ -546,7 +546,7 @@ def resnet_model_fn(features, labels, mode, params):
   #pricestensorpart2 = pricestensor[:max_batch_len_tensor-arrayindex]
   pricestensor = tf.reshape(tf.concat(
       [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
-      pricetensor.shape)
+      pricestensor.shape)
   #pricestensor = tf.reshape(new_pricestensor, pricestensor.shape)
         
   #labeltensorpart1 = labeltensor[:arrayindex]
