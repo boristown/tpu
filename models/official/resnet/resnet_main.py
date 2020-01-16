@@ -503,7 +503,6 @@ def resnet_model_fn(features, labels, mode, params):
         trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
         trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
 
-
         pricestensorpart1 = pricestensor[:arrayindex]
         pricestensorpart2 = pricestensor[arrayindex+2:]
         pricesvar = tf.concat([[trainingInputData],[trainingInputData*-1+1]], axis=0)
@@ -538,17 +537,27 @@ def resnet_model_fn(features, labels, mode, params):
     def skip_training_set(arrayindex, labeltensor, pricestensor):
       return arrayindex, labeltensor, pricestensor
     arrayindex, labeltensor, pricestensor = tf.cond(tf.greater(labels_int[batchIndex],tf.constant(priceInputCount,dtype=tf.int64)),lambda: make_training_set(arrayindex, labeltensor, pricestensor),lambda: skip_training_set(arrayindex, labeltensor, pricestensor))
-          
+  
+  pricestensorpart1 = pricestensor[:arrayindex]
+  pricestensorpart2 = pricestensor[:max_batch_len_tensor-arrayindex]
+  new_pricestensor = tf.concat([pricestensorpart1,pricestensorpart2], axis=0)
+  pricestensor = tf.reshape(new_pricestensor, pricestensor.shape)
+        
+  labeltensorpart1 = labeltensor[:arrayindex]
+  labeltensorpart2 = labeltensor[:max_batch_len_tensor-arrayindex]
+  new_labeltensor = tf.concat([labeltensorpart1,labeltensorpart2], axis=0)
+  labeltensor = tf.reshape(new_labeltensor, labeltensor.shape)
+
   if FLAGS.precision == 'bfloat16':
     #with tf.contrib.tpu.bfloat16_scope():
     with tf.tpu.bfloat16_scope():
       #logits = build_network(features)
       #logits_mirror = build_network(features*-1.0+1.0)
-      logits = build_network(pricestensor[:arrayindex])
+      logits = build_network(pricestensor)
   elif FLAGS.precision == 'float32':
     #logits = build_network(features)
     #logits_mirror = build_network(features*-1.0+1.0)
-    logits = build_network(pricestensor[:arrayindex])
+    logits = build_network(pricestensor)
   
   logits = tf.cast(logits, tf.float32)
   #logits_mirror = tf.cast(logits_mirror, tf.float32)
