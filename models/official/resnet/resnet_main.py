@@ -397,7 +397,7 @@ def resnet_model_fn(features, labels, mode, params):
     features = features['feature']
   
   price_list_len = 10000
-  max_batch_len = 20000
+  max_batch_len = 5000
   max_batch_len_tensor = tf.constant(max_batch_len, dtype=tf.int64)
 
   # Insert Loop Code From Here Boris Town 20200109
