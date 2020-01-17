@@ -482,10 +482,10 @@ def resnet_model_fn(features, labels, mode, params):
     
   if FLAGS.precision == 'bfloat16':
     labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.bfloat16)
-    pricestensor = tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.bfloat16)
+    pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.bfloat16)
   else:
     labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.float32)
-    pricestensor = tf.zeros([max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT], dtype=tf.float32)
+    pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.float32)
     
   batchCount = labels.shape[0]
   labels_int = tf.cast(labels, tf.int64)
@@ -501,15 +501,21 @@ def resnet_model_fn(features, labels, mode, params):
       def while_body(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
         #for trainingIndex in range(trainingCount):
         trainingInputData = scale_to_0_1(priceList[trainingIndex:trainingIndex+priceInputCount:1][-1::-1])
-        trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+        trainingInputData = tf.reshape(trainingInputData, [-1])
 
-        #pricestensorpart1 = pricestensor[:arrayindex]
-        #pricestensorpart2 = pricestensor[arrayindex+2:]
-        #pricesvar = tf.concat([[trainingInputData],[trainingInputData*-1+1]], axis=0)
-        new_pricestensor = tf.reshape(tf.concat(
-            [pricestensor[:arrayindex],[trainingInputData],[trainingInputData*-1+1],pricestensor[arrayindex+2:]], axis=0),
-            pricestensor.shape)
-        #new_pricestensor = tf.reshape(new_pricestensor, pricestensor.shape)
+        for price_element_index in range(priceInputCount):
+            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=arrayindex, dtype=tf.int64)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            pricestensor = pricestensor + one_hot_2d * trainingInputData[price_element_index]
+            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=arrayindex+1, dtype=tf.int64)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            pricestensor = pricestensor + one_hot_2d * trainingInputData[price_element_index] *-1+1
+        
+        #trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+        
+        #new_pricestensor = tf.reshape(tf.concat(
+        #    [pricestensor[:arrayindex],[trainingInputData],[trainingInputData*-1+1],pricestensor[arrayindex+2:]], axis=0),
+        #    pricestensor.shape)
         
         #trainingInputSet.write(arrayindex, trainingInputData)
         #trainingInputSet.write(arrayindex+1, trainingInputData*-1.0+1.0)
@@ -522,20 +528,26 @@ def resnet_model_fn(features, labels, mode, params):
         #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
         #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
         
-        #labeltensorpart1 = labeltensor[:arrayindex]
-        #labeltensorpart2 = labeltensor[arrayindex+2:]
-        #labelvar = tf.concat([[LabelData],[LabelData*-1+1]], axis=0)
         LabelData = tf.reshape(LabelData, [2])
-        new_labeltensor = tf.reshape(tf.concat(
-            [labeltensor[:arrayindex],[LabelData],[LabelData*-1+1],labeltensor[arrayindex+2:]], axis=0),
-            labeltensor.shape)
+        
+        for label_element_index in range(2):
+            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=arrayindex, dtype=tf.int64)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            labeltensor = labeltensor + one_hot_2d * LabelData[label_element_index]
+            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=arrayindex+1, dtype=tf.int64)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            labeltensor = labeltensor + one_hot_2d * LabelData[label_element_index] *-1+1
+        
+        #new_labeltensor = tf.reshape(tf.concat(
+        #    [labeltensor[:arrayindex],[LabelData],[LabelData*-1+1],labeltensor[arrayindex+2:]], axis=0),
+        #    labeltensor.shape)
         #new_labeltensor = tf.reshape(new_labeltensor, labeltensor.shape)
         
         #LabelSet.write(arrayindex, LabelData)
         #LabelSet.write(arrayindex+1, LabelData*-1+1)
         trainingIndex = tf.add(trainingIndex, 1)
         arrayindex += 2
-        return [arrayindex, trainingIndex, trainingCount, new_labeltensor, new_pricestensor]
+        return [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor]
       arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
       return arrayindex, labeltensor, pricestensor
     
@@ -543,20 +555,16 @@ def resnet_model_fn(features, labels, mode, params):
       return arrayindex, labeltensor, pricestensor
     arrayindex, labeltensor, pricestensor = tf.cond(tf.greater(labels_int[batchIndex],tf.constant(priceInputCount,dtype=tf.int64)),lambda: make_training_set(arrayindex, labeltensor, pricestensor),lambda: skip_training_set(arrayindex, labeltensor, pricestensor))
   
-  #pricestensorpart1 = pricestensor[:arrayindex]
-  #pricestensorpart2 = pricestensor[:max_batch_len_tensor-arrayindex]
   pricestensor = tf.reshape(tf.concat(
       [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
       pricestensor.shape)
-  #pricestensor = tf.reshape(new_pricestensor, pricestensor.shape)
-        
-  #labeltensorpart1 = labeltensor[:arrayindex]
-  #labeltensorpart2 = labeltensor[:max_batch_len_tensor-arrayindex]
+            
   labeltensor = tf.reshape(tf.concat(
       [labeltensor[:arrayindex],labeltensor[:max_batch_len_tensor-arrayindex]], axis=0),
       labeltensor.shape)
-  #labeltensor = tf.reshape(new_labeltensor, labeltensor.shape)
-
+  
+  pricestensor = tf.reshape(pricestensor, [max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+  
   if FLAGS.precision == 'bfloat16':
     #with tf.contrib.tpu.bfloat16_scope():
     with tf.tpu.bfloat16_scope():
@@ -612,7 +620,7 @@ def resnet_model_fn(features, labels, mode, params):
 
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
-      onehot_labels=labeltensor[:arrayindex],
+      onehot_labels=labeltensor,
       label_smoothing=FLAGS.label_smoothing)
 
   #cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
