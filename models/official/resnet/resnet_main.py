@@ -662,11 +662,15 @@ def resnet_model_fn(features, labels, mode, params):
   #     if 'batch_normalization' not in v.name])
 
   #loss = cross_entropy + cross_entropy_mirror + FLAGS.weight_decay * tf.add_n(
+
+  loss = cross_entropy
+  '''
   loss = cross_entropy + FLAGS.weight_decay * tf.add_n([
       tf.nn.l2_loss(v) 
       for v in tf.trainable_variables()
       if 'batch_normalization' not in v.name and v.dtype is not tf.int32 and v.dtype is not tf.int64
   ])
+  '''
     
   host_call = None
   if mode == tf.estimator.ModeKeys.TRAIN:
@@ -835,7 +839,7 @@ def resnet_model_fn(features, labels, mode, params):
       }
 
     #eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
-    eval_metrics = (metric_fn, [labeltensor[:arrayindex], logits])
+    eval_metrics = (metric_fn, [labeltensor, logits])
 
   #return tf.contrib.tpu.TPUEstimatorSpec(
   return tf.estimator.tpu.TPUEstimatorSpec(
