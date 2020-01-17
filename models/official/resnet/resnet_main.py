@@ -559,6 +559,13 @@ def resnet_model_fn(features, labels, mode, params):
       return arrayindex, labeltensor, pricestensor
     arrayindex, labeltensor, pricestensor = tf.cond(tf.greater(labels_int[batchIndex],tf.constant(priceInputCount,dtype=tf.int64)),lambda: make_training_set(arrayindex, labeltensor, pricestensor),lambda: skip_training_set(arrayindex, labeltensor, pricestensor))
   
+  
+  def while_cond_copy(arrayindex, labeltensor, pricestensor):
+    return arrayindex < max_batch_len_tensor
+  def while_body_copy(arrayindex, labeltensor, pricestensor):
+    return arrayindex, labeltensor, pricestensor
+  arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
+      
   pricestensor = tf.reshape(tf.concat(
       [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
       pricestensor.shape)
