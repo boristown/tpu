@@ -370,7 +370,7 @@ def scale_to_0_1(x):
   target_max = 0.999
   
   if current_max == current_min:
-    return x
+    return tf.ones(x.shape, dtype=tf.float32)
   # scale to [0; 1]
   x = (x - current_min) / (current_max - current_min)
 
