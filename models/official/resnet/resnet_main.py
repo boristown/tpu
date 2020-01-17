@@ -500,7 +500,7 @@ def resnet_model_fn(features, labels, mode, params):
         return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len_tensor)
       def while_body(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
         #for trainingIndex in range(trainingCount):
-        trainingInputData = tf.zeros([priceInputCount], dtype=tf.bfloat16)
+        trainingInputData = tf.zeros([priceInputCount], dtype=tf.float32)
         for price_element_index in range(priceInputCount):
             one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=1, dtype=tf.int32)
             trainingInputData = trainingInputData + tf.cast(one_hot_1d, tf.float32) * priceList[trainingIndex+priceInputCount - price_element_index - 1]
