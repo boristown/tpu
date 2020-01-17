@@ -504,11 +504,11 @@ def resnet_model_fn(features, labels, mode, params):
         trainingInputData = tf.reshape(trainingInputData, [-1])
 
         for price_element_index in range(priceInputCount):
-            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=arrayindex, dtype=tf.int64)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=arrayindex, dtype=tf.int32)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32)
             pricestensor = pricestensor + one_hot_2d * trainingInputData[price_element_index]
-            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=arrayindex+1, dtype=tf.int64)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=arrayindex+1, dtype=tf.int32)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32)
             pricestensor = pricestensor + one_hot_2d * trainingInputData[price_element_index] *-1+1
         
         #trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
@@ -531,11 +531,11 @@ def resnet_model_fn(features, labels, mode, params):
         LabelData = tf.reshape(LabelData, [2])
         
         for label_element_index in range(2):
-            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=arrayindex, dtype=tf.int64)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=arrayindex, dtype=tf.int32)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32)
             labeltensor = labeltensor + one_hot_2d * LabelData[label_element_index]
-            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=arrayindex+1, dtype=tf.int64)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int64)
+            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=arrayindex+1, dtype=tf.int32)
+            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32)
             labeltensor = labeltensor + one_hot_2d * LabelData[label_element_index] *-1+1
         
         #new_labeltensor = tf.reshape(tf.concat(
