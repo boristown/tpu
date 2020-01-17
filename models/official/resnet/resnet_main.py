@@ -574,7 +574,7 @@ def resnet_model_fn(features, labels, mode, params):
       labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * labeltensor[original_index][label_element_index]
     arrayindex += 1
     original_index += 1
-    return original_index, arrayindex, labeltensor, pricestensor
+    return [original_index, arrayindex, labeltensor, pricestensor]
   original_index, arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [original_index, arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
       
   #pricestensor = tf.reshape(tf.concat(
