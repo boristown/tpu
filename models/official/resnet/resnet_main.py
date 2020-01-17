@@ -561,9 +561,9 @@ def resnet_model_fn(features, labels, mode, params):
   
   original_index = tf.Variable(0, dtype=tf.int64, trainable=False)
     
-  def while_cond_copy(origianl_index, arrayindex, labeltensor, pricestensor):
+  def while_cond_copy(original_index, arrayindex, labeltensor, pricestensor):
     return arrayindex < max_batch_len_tensor
-  def while_body_copy(origianl_index, arrayindex, labeltensor, pricestensor):
+  def while_body_copy(original_index, arrayindex, labeltensor, pricestensor):
     for price_element_index in range(priceInputCount):
       one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32), dtype=tf.int32)
       one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
@@ -574,8 +574,8 @@ def resnet_model_fn(features, labels, mode, params):
       labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * labeltensor[original_index][label_element_index]
     arrayindex += 1
     original_index += 1
-    return origianl_index, arrayindex, labeltensor, pricestensor
-  origianl_index, arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [origianl_index, arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
+    return original_index, arrayindex, labeltensor, pricestensor
+  original_index, arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [original_index, arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
       
   #pricestensor = tf.reshape(tf.concat(
   #    [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
