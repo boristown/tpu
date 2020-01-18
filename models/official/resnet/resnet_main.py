@@ -366,8 +366,8 @@ def scale_to_0_1(x):
   # x is your tensor
   current_min = tf.reduce_min(x)
   current_max = tf.reduce_max(x)
-  target_min = 0.001
-  target_max = 0.999
+  target_min = 0
+  target_max = 1
   
   if current_max == current_min:
     return tf.ones(x.shape, dtype=tf.float32)
@@ -397,7 +397,7 @@ def resnet_model_fn(features, labels, mode, params):
     features = features['feature']
   
   price_list_len = 10000
-  max_batch_len = 1000
+  max_batch_len = 2000
   max_batch_len_tensor = tf.constant(max_batch_len, dtype=tf.int64)
 
   # Insert Loop Code From Here Boris Town 20200109
@@ -502,18 +502,22 @@ def resnet_model_fn(features, labels, mode, params):
         #for trainingIndex in range(trainingCount):
         trainingInputData = tf.zeros([priceInputCount], dtype=tf.float32)
         for price_element_index in range(priceInputCount):
-            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=1, dtype=tf.int32)
-            trainingInputData = trainingInputData + tf.cast(one_hot_1d, tf.float32) * priceList[trainingIndex+priceInputCount - price_element_index - 1]
+            one_hot_price_element = tf.one_hot(price_element_index, priceInputCount, on_value=1, off_value = 0, dtype=tf.int32, name="price_element")
+            trainingInputData = tf.identity(trainingInputData + tf.cast(one_hot_price_element, tf.float32) * priceList[trainingIndex + priceInputCount - price_element_index - 1])
         trainingInputData = scale_to_0_1(trainingInputData)
         trainingInputData = tf.reshape(trainingInputData, [priceInputCount])
-
+        trainingInputData_Mirror = tf.identity(trainingInputData*-1+1)
+        
         for price_element_index in range(priceInputCount):
-            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32), dtype=tf.int32)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
-            pricestensor = pricestensor + tf.cast(one_hot_2d, tf.float32) * trainingInputData[price_element_index]
-            one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32)+1, dtype=tf.int32)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
-            pricestensor = pricestensor + tf.cast(one_hot_2d, tf.float32) * trainingInputData[price_element_index] *-1+1
+            one_hot_price_element_1d = tf.one_hot(price_element_index, priceInputCount, on_value= tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32, name="price1d")
+            #one_hot_price_element_1d = one_hot_price_element_1d * tf.cast(arrayindex+1, tf.int32) - 1
+            one_hot_price_element_2d = tf.one_hot(one_hot_price_element_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="price2d")
+            pricestensor = pricestensor + tf.cast(one_hot_price_element_2d, tf.float32) * trainingInputData[price_element_index]
+
+            one_hot_price_element_mirror_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex+1,tf.int32), off_value = -1, dtype=tf.int32, name="pricemirror1d")
+            #one_hot_price_element_mirror_1d = one_hot_price_element_mirror_1d *tf.cast(arrayindex + 2,tf.int32) - 1
+            one_hot_price_element_mirror_2d = tf.one_hot(one_hot_price_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="pricemirror2d")
+            pricestensor = pricestensor + tf.cast(one_hot_price_element_mirror_2d, tf.float32) *  trainingInputData_Mirror[price_element_index]
         
         #trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
         
@@ -533,15 +537,18 @@ def resnet_model_fn(features, labels, mode, params):
         #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
         
         LabelData = tf.reshape(LabelData, [2])
+        LabelData_Mirror = tf.identity(LabelData*-1+1)
         
         for label_element_index in range(2):
-            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex, tf.int32), dtype=tf.int32)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
-            labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * LabelData[label_element_index]
-            one_hot_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex, tf.int32)+1, dtype=tf.int32)
-            one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
-            labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * LabelData[label_element_index] *-1+1
-        
+            one_hot_label_element_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex,tf.int32), off_value = -1, dtype=tf.int32,name= "label1d")
+            #one_hot_label_element_1d = one_hot_label_element_1d * tf.cast(arrayindex+1,tf.int32) - 1
+            one_hot_label_element_2d = tf.one_hot(one_hot_label_element_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="label2d")
+            labeltensor = labeltensor + tf.cast(one_hot_label_element_2d, tf.float32) * LabelData[label_element_index]
+            one_hot_label_element_mirror_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex+1,tf.int32), off_value = -1, dtype=tf.int32,name="labelmirror1d")
+            #one_hot_label_element_mirror_1d = one_hot_label_element_mirror_1d * tf.cast(arrayindex+2,tf.int32) - 1
+            one_hot_label_element_mirror_2d = tf.one_hot(one_hot_label_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0,name="labelmirror2d")
+            labeltensor = labeltensor + tf.cast(one_hot_label_element_mirror_2d, tf.float32) * LabelData_Mirror[label_element_index]
+
         #new_labeltensor = tf.reshape(tf.concat(
         #    [labeltensor[:arrayindex],[LabelData],[LabelData*-1+1],labeltensor[arrayindex+2:]], axis=0),
         #    labeltensor.shape)
@@ -550,7 +557,7 @@ def resnet_model_fn(features, labels, mode, params):
         #LabelSet.write(arrayindex, LabelData)
         #LabelSet.write(arrayindex+1, LabelData*-1+1)
         trainingIndex = tf.add(trainingIndex, 1)
-        arrayindex += 2
+        arrayindex = tf.add(arrayindex, 2)
         return [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor]
       arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
       return arrayindex, labeltensor, pricestensor
@@ -565,12 +572,12 @@ def resnet_model_fn(features, labels, mode, params):
     return arrayindex < max_batch_len_tensor
   def while_body_copy(original_index, arrayindex, labeltensor, pricestensor):
     for price_element_index in range(priceInputCount):
-      one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32), dtype=tf.int32)
-      one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
+      one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32)
+      one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0)
       pricestensor = pricestensor + tf.cast(one_hot_2d, tf.float32) * pricestensor[original_index][price_element_index]
     for label_element_index in range(2):
-      one_hot_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex, tf.int32), dtype=tf.int32)
-      one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, dtype=tf.int32, axis=0)
+      one_hot_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32)
+      one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0)
       labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * labeltensor[original_index][label_element_index]
     arrayindex += 1
     original_index += 1
