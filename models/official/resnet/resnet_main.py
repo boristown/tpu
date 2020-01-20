@@ -1152,17 +1152,19 @@ def main(unused_argv):
           #outarray = np.zeros([price_batch_size, MAX_CASE*LABEL_COUNT])
           outarray = np.zeros([price_batch_size, LABEL_COUNT])
           
-          for case_index, pred_item in enumerate(predictions):
+          #for case_index, pred_item in enumerate(predictions):
+          #for pred_item in enumerate(predictions):
             #tf.logging.info("pred_item_probabilities=%s" % (pred_item['probabilities']))
             #predict_line = ''
-            for batch_index, pred_operation in enumerate(pred_item['probabilities']):
-              #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
-              for label_index in range(LABEL_COUNT):
-                #predict_line += str(pred_operation[k])
-                #tf.logging.info("prediction op:%s" % (pred_operation[label_index]))
-                outarray[batch_index][case_index*LABEL_COUNT+label_index] = pred_operation[label_index]
-             #predict_file.write(predict_line+'\n')
-          #predict_file.close()
+          for batch_index, pred_operation in enumerate(predictions['probabilities']):
+            #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
+            for label_index in range(LABEL_COUNT):
+              #predict_line += str(pred_operation[k])
+              #tf.logging.info("prediction op:%s" % (pred_operation[label_index]))
+              #outarray[batch_index][case_index*LABEL_COUNT+label_index] = pred_operation[label_index]
+              outarray[batch_index][label_index] = pred_operation[label_index]
+               #predict_file.write(predict_line+'\n')
+            #predict_file.close()
           
           #tf.logging.info('predict_line = %s' % (predict_line))
           for pred_row in outarray:
