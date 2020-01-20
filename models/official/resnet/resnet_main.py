@@ -618,10 +618,10 @@ def resnet_model_fn(features, labels, mode, params):
         logits = build_network(features)
         #logits_mirror = build_network(features*-1.0+1.0)
         #logits = build_network(pricestensor)
-      elif FLAGS.precision == 'float32':
-        logits = build_network(features)
-        #logits_mirror = build_network(features*-1.0+1.0)
-        #logits = build_network(pricestensor)
+    elif FLAGS.precision == 'float32':
+      logits = build_network(features)
+      #logits_mirror = build_network(features*-1.0+1.0)
+      #logits = build_network(pricestensor)
 
   logits = tf.cast(logits, tf.float32)
   #logits_mirror = tf.cast(logits_mirror, tf.float32)
