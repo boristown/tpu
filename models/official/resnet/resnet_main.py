@@ -1156,7 +1156,9 @@ def main(unused_argv):
           #for pred_item in enumerate(predictions):
             #tf.logging.info("pred_item_probabilities=%s" % (pred_item['probabilities']))
             #predict_line = ''
-          for batch_index, pred_operation in enumerate(predictions['probabilities']):
+          #for batch_index, pred_operation in enumerate(predictions['probabilities']):
+          for batch_index, pred_item in enumerate(predictions):
+            pred_operation = pred_item['probabilities']
             #tf.logging.info("pred_operation.shape=%s" % (pred_operation.shape))
             for label_index in range(LABEL_COUNT):
               #predict_line += str(pred_operation[k])
