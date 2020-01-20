@@ -410,8 +410,8 @@ def resnet_model_fn(features, labels, mode, params):
     assert not FLAGS.transpose_input    # channels_first only for GPU
     #features = tf.transpose(features, [0, 3, 1, 2])
 
-  #if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
-  if FLAGS.transpose_input:
+  if FLAGS.transpose_input and mode != tf.estimator.ModeKeys.PREDICT:
+  #if FLAGS.transpose_input:
     #features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
     features = tf.reshape(features, [price_list_len, -1])
     #features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
@@ -421,6 +421,11 @@ def resnet_model_fn(features, labels, mode, params):
       #labels = tf.transpose(labels, [1, 0])  # LN to NL
       tf.logging.info("features=%s,labels=%s" % (features.shape, labels.shape))
     
+  if FLAGS.transpose_input and mode == tf.estimator.ModeKeys.PREDICT:
+    features = tf.reshape(features, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT, -1])
+    #features = tf.reshape(features, [price_list_len, -1])
+    features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHWC
+    #features = tf.transpose(features, [1, 0])  # PN to NP
 
   # Normalize the image to zero mean and unit variance.
   #features -= tf.constant(MEAN_RGB, shape=[1, 1, 3], dtype=features.dtype)
@@ -479,132 +484,145 @@ def resnet_model_fn(features, labels, mode, params):
     trainingInputSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
     LabelSet = tf.TensorArray(dtype=tf.float32,size=max_batch_len,dynamic_size=False,element_shape=[2])
   '''
-    
-  if FLAGS.precision == 'bfloat16':
-    labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.bfloat16)
-    pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.bfloat16)
-  else:
-    labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.float32)
-    pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.float32)
-    
-  batchCount = labels.shape[0]
-  labels_int = tf.cast(labels, tf.int64)
-  arrayindex = tf.Variable(0, dtype=tf.int64, trainable=False)
-  for batchIndex in range(batchCount):
-    priceList = features[batchIndex]
-    def make_training_set(arrayindex, labeltensor, pricestensor):
-      #if labels[batchIndex] > tf.constant(priceInputCount):
-      trainingCount = labels_int[batchIndex] - tf.constant(priceInputCount, dtype=tf.int64)
-      trainingIndex = tf.Variable(0, dtype=tf.int64, trainable=False)
-      def while_cond(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
-        return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len_tensor)
-      def while_body(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
-        #for trainingIndex in range(trainingCount):
-        trainingInputData = tf.zeros([priceInputCount], dtype=tf.float32)
-        for price_element_index in range(priceInputCount):
-            one_hot_price_element = tf.one_hot(price_element_index, priceInputCount, on_value=1, off_value = 0, dtype=tf.int32, name="price_element")
-            trainingInputData = tf.identity(trainingInputData + tf.cast(one_hot_price_element, tf.float32) * priceList[trainingIndex + priceInputCount - price_element_index - 1])
-        trainingInputData = scale_to_0_1(trainingInputData)
-        trainingInputData = tf.reshape(trainingInputData, [priceInputCount])
-        trainingInputData_Mirror = tf.identity(trainingInputData*-1+1)
-        
-        for price_element_index in range(priceInputCount):
-            one_hot_price_element_1d = tf.one_hot(price_element_index, priceInputCount, on_value= tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32, name="price1d")
-            #one_hot_price_element_1d = one_hot_price_element_1d * tf.cast(arrayindex+1, tf.int32) - 1
-            one_hot_price_element_2d = tf.one_hot(one_hot_price_element_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="price2d")
-            pricestensor = pricestensor + tf.cast(one_hot_price_element_2d, tf.float32) * trainingInputData[price_element_index]
+  
+  if mode != tf.estimator.ModeKeys.PREDICT:
+    if FLAGS.precision == 'bfloat16':
+        labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.bfloat16)
+        pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.bfloat16)
+      else:
+        labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.float32)
+        pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.float32)
 
-            one_hot_price_element_mirror_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex+1,tf.int32), off_value = -1, dtype=tf.int32, name="pricemirror1d")
-            #one_hot_price_element_mirror_1d = one_hot_price_element_mirror_1d *tf.cast(arrayindex + 2,tf.int32) - 1
-            one_hot_price_element_mirror_2d = tf.one_hot(one_hot_price_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="pricemirror2d")
-            pricestensor = pricestensor + tf.cast(one_hot_price_element_mirror_2d, tf.float32) *  trainingInputData_Mirror[price_element_index]
-        
-        #trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-        
-        #new_pricestensor = tf.reshape(tf.concat(
-        #    [pricestensor[:arrayindex],[trainingInputData],[trainingInputData*-1+1],pricestensor[arrayindex+2:]], axis=0),
-        #    pricestensor.shape)
-        
-        #trainingInputSet.write(arrayindex, trainingInputData)
-        #trainingInputSet.write(arrayindex+1, trainingInputData*-1.0+1.0)
-        #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
-        if FLAGS.precision == 'bfloat16':
-          LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.bfloat16), lambda: tf.constant([1.0 ,0.0], dtype=tf.bfloat16))
-        else:
-          LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.float32), lambda: tf.constant([1.0 ,0.0], dtype=tf.float32))
-        #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
-        #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
-        #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
-        
-        LabelData = tf.reshape(LabelData, [2])
-        LabelData_Mirror = tf.identity(LabelData*-1+1)
-        
+      batchCount = labels.shape[0]
+      labels_int = tf.cast(labels, tf.int64)
+      arrayindex = tf.Variable(0, dtype=tf.int64, trainable=False)
+      for batchIndex in range(batchCount):
+        priceList = features[batchIndex]
+        def make_training_set(arrayindex, labeltensor, pricestensor):
+          #if labels[batchIndex] > tf.constant(priceInputCount):
+          trainingCount = labels_int[batchIndex] - tf.constant(priceInputCount, dtype=tf.int64)
+          trainingIndex = tf.Variable(0, dtype=tf.int64, trainable=False)
+          def while_cond(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
+            return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len_tensor)
+          def while_body(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
+            #for trainingIndex in range(trainingCount):
+            trainingInputData = tf.zeros([priceInputCount], dtype=tf.float32)
+            for price_element_index in range(priceInputCount):
+                one_hot_price_element = tf.one_hot(price_element_index, priceInputCount, on_value=1, off_value = 0, dtype=tf.int32, name="price_element")
+                trainingInputData = tf.identity(trainingInputData + tf.cast(one_hot_price_element, tf.float32) * priceList[trainingIndex + priceInputCount - price_element_index - 1])
+            trainingInputData = scale_to_0_1(trainingInputData)
+            trainingInputData = tf.reshape(trainingInputData, [priceInputCount])
+            trainingInputData_Mirror = tf.identity(trainingInputData*-1+1)
+
+            for price_element_index in range(priceInputCount):
+                one_hot_price_element_1d = tf.one_hot(price_element_index, priceInputCount, on_value= tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32, name="price1d")
+                #one_hot_price_element_1d = one_hot_price_element_1d * tf.cast(arrayindex+1, tf.int32) - 1
+                one_hot_price_element_2d = tf.one_hot(one_hot_price_element_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="price2d")
+                pricestensor = pricestensor + tf.cast(one_hot_price_element_2d, tf.float32) * trainingInputData[price_element_index]
+
+                one_hot_price_element_mirror_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex+1,tf.int32), off_value = -1, dtype=tf.int32, name="pricemirror1d")
+                #one_hot_price_element_mirror_1d = one_hot_price_element_mirror_1d *tf.cast(arrayindex + 2,tf.int32) - 1
+                one_hot_price_element_mirror_2d = tf.one_hot(one_hot_price_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="pricemirror2d")
+                pricestensor = pricestensor + tf.cast(one_hot_price_element_mirror_2d, tf.float32) *  trainingInputData_Mirror[price_element_index]
+
+            #trainingInputData = tf.reshape(trainingInputData, [PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+
+            #new_pricestensor = tf.reshape(tf.concat(
+            #    [pricestensor[:arrayindex],[trainingInputData],[trainingInputData*-1+1],pricestensor[arrayindex+2:]], axis=0),
+            #    pricestensor.shape)
+
+            #trainingInputSet.write(arrayindex, trainingInputData)
+            #trainingInputSet.write(arrayindex+1, trainingInputData*-1.0+1.0)
+            #LabelData = tf.cond(tf.greater_equal(priceList[trainingIndex+priceInputCount], priceList[trainingIndex+priceInputCount-1]), lambda: tf.Variable(tf.constant([[0 ,1]])), lambda: tf.Variable(tf.constant([[1 ,0]])))
+            if FLAGS.precision == 'bfloat16':
+              LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.bfloat16), lambda: tf.constant([1.0 ,0.0], dtype=tf.bfloat16))
+            else:
+              LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.float32), lambda: tf.constant([1.0 ,0.0], dtype=tf.float32))
+            #LabelData = [[0, 1]] if priceList[trainingIndex+priceInputCount] >= priceList[trainingIndex+priceInputCount-1] else [[1, 0]]
+            #LabelSet = tf.concat([LabelSet, LabelData], axis=0)
+            #LabelSet = tf.concat([LabelSet, LabelData*-1+1], axis=0)
+
+            LabelData = tf.reshape(LabelData, [2])
+            LabelData_Mirror = tf.identity(LabelData*-1+1)
+
+            for label_element_index in range(2):
+                one_hot_label_element_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex,tf.int32), off_value = -1, dtype=tf.int32,name= "label1d")
+                #one_hot_label_element_1d = one_hot_label_element_1d * tf.cast(arrayindex+1,tf.int32) - 1
+                one_hot_label_element_2d = tf.one_hot(one_hot_label_element_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="label2d")
+                labeltensor = labeltensor + tf.cast(one_hot_label_element_2d, tf.float32) * LabelData[label_element_index]
+                one_hot_label_element_mirror_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex+1,tf.int32), off_value = -1, dtype=tf.int32,name="labelmirror1d")
+                #one_hot_label_element_mirror_1d = one_hot_label_element_mirror_1d * tf.cast(arrayindex+2,tf.int32) - 1
+                one_hot_label_element_mirror_2d = tf.one_hot(one_hot_label_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0,name="labelmirror2d")
+                labeltensor = labeltensor + tf.cast(one_hot_label_element_mirror_2d, tf.float32) * LabelData_Mirror[label_element_index]
+
+            #new_labeltensor = tf.reshape(tf.concat(
+            #    [labeltensor[:arrayindex],[LabelData],[LabelData*-1+1],labeltensor[arrayindex+2:]], axis=0),
+            #    labeltensor.shape)
+            #new_labeltensor = tf.reshape(new_labeltensor, labeltensor.shape)
+
+            #LabelSet.write(arrayindex, LabelData)
+            #LabelSet.write(arrayindex+1, LabelData*-1+1)
+            trainingIndex = tf.add(trainingIndex, 1)
+            arrayindex = tf.add(arrayindex, 2)
+            return [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor]
+          arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
+          return arrayindex, labeltensor, pricestensor
+
+        def skip_training_set(arrayindex, labeltensor, pricestensor):
+          return arrayindex, labeltensor, pricestensor
+        arrayindex, labeltensor, pricestensor = tf.cond(tf.greater(labels_int[batchIndex],tf.constant(priceInputCount,dtype=tf.int64)),lambda: make_training_set(arrayindex, labeltensor, pricestensor),lambda: skip_training_set(arrayindex, labeltensor, pricestensor))
+
+      original_index = tf.Variable(0, dtype=tf.int64, trainable=False)
+
+      def while_cond_copy(original_index, arrayindex, labeltensor, pricestensor):
+        return arrayindex < max_batch_len_tensor
+      def while_body_copy(original_index, arrayindex, labeltensor, pricestensor):
+        for price_element_index in range(priceInputCount):
+          one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32)
+          one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0)
+          pricestensor = pricestensor + tf.cast(one_hot_2d, tf.float32) * pricestensor[original_index][price_element_index]
         for label_element_index in range(2):
-            one_hot_label_element_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex,tf.int32), off_value = -1, dtype=tf.int32,name= "label1d")
-            #one_hot_label_element_1d = one_hot_label_element_1d * tf.cast(arrayindex+1,tf.int32) - 1
-            one_hot_label_element_2d = tf.one_hot(one_hot_label_element_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="label2d")
-            labeltensor = labeltensor + tf.cast(one_hot_label_element_2d, tf.float32) * LabelData[label_element_index]
-            one_hot_label_element_mirror_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex+1,tf.int32), off_value = -1, dtype=tf.int32,name="labelmirror1d")
-            #one_hot_label_element_mirror_1d = one_hot_label_element_mirror_1d * tf.cast(arrayindex+2,tf.int32) - 1
-            one_hot_label_element_mirror_2d = tf.one_hot(one_hot_label_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0,name="labelmirror2d")
-            labeltensor = labeltensor + tf.cast(one_hot_label_element_mirror_2d, tf.float32) * LabelData_Mirror[label_element_index]
+          one_hot_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32)
+          one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0)
+          labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * labeltensor[original_index][label_element_index]
+        arrayindex += 1
+        original_index += 1
+        return [original_index, arrayindex, labeltensor, pricestensor]
+      original_index, arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [original_index, arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
 
-        #new_labeltensor = tf.reshape(tf.concat(
-        #    [labeltensor[:arrayindex],[LabelData],[LabelData*-1+1],labeltensor[arrayindex+2:]], axis=0),
-        #    labeltensor.shape)
-        #new_labeltensor = tf.reshape(new_labeltensor, labeltensor.shape)
+      #pricestensor = tf.reshape(tf.concat(
+      #    [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
+      #    pricestensor.shape)
+
+      #labeltensor = tf.reshape(tf.concat(
+      #    [labeltensor[:arrayindex],labeltensor[:max_batch_len_tensor-arrayindex]], axis=0),
+      #    labeltensor.shape)
+
+      pricestensor = tf.reshape(pricestensor, [max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
+
+      if FLAGS.precision == 'bfloat16':
+        #with tf.contrib.tpu.bfloat16_scope():
+        with tf.tpu.bfloat16_scope():
+          #logits = build_network(features)
+          #logits_mirror = build_network(features*-1.0+1.0)
+          logits = build_network(pricestensor)
+      elif FLAGS.precision == 'float32':
+        #logits = build_network(features)
+        #logits_mirror = build_network(features*-1.0+1.0)
+        logits = build_network(pricestensor)
         
-        #LabelSet.write(arrayindex, LabelData)
-        #LabelSet.write(arrayindex+1, LabelData*-1+1)
-        trainingIndex = tf.add(trainingIndex, 1)
-        arrayindex = tf.add(arrayindex, 2)
-        return [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor]
-      arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
-      return arrayindex, labeltensor, pricestensor
-    
-    def skip_training_set(arrayindex, labeltensor, pricestensor):
-      return arrayindex, labeltensor, pricestensor
-    arrayindex, labeltensor, pricestensor = tf.cond(tf.greater(labels_int[batchIndex],tf.constant(priceInputCount,dtype=tf.int64)),lambda: make_training_set(arrayindex, labeltensor, pricestensor),lambda: skip_training_set(arrayindex, labeltensor, pricestensor))
-  
-  original_index = tf.Variable(0, dtype=tf.int64, trainable=False)
-    
-  def while_cond_copy(original_index, arrayindex, labeltensor, pricestensor):
-    return arrayindex < max_batch_len_tensor
-  def while_body_copy(original_index, arrayindex, labeltensor, pricestensor):
-    for price_element_index in range(priceInputCount):
-      one_hot_1d = tf.one_hot(price_element_index, priceInputCount, on_value=tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32)
-      one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0)
-      pricestensor = pricestensor + tf.cast(one_hot_2d, tf.float32) * pricestensor[original_index][price_element_index]
-    for label_element_index in range(2):
-      one_hot_1d = tf.one_hot(label_element_index, 2, on_value=tf.cast(arrayindex, tf.int32), off_value = -1, dtype=tf.int32)
-      one_hot_2d = tf.one_hot(one_hot_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0)
-      labeltensor = labeltensor + tf.cast(one_hot_2d, tf.float32) * labeltensor[original_index][label_element_index]
-    arrayindex += 1
-    original_index += 1
-    return [original_index, arrayindex, labeltensor, pricestensor]
-  original_index, arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [original_index, arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
-      
-  #pricestensor = tf.reshape(tf.concat(
-  #    [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
-  #    pricestensor.shape)
-            
-  #labeltensor = tf.reshape(tf.concat(
-  #    [labeltensor[:arrayindex],labeltensor[:max_batch_len_tensor-arrayindex]], axis=0),
-  #    labeltensor.shape)
-  
-  pricestensor = tf.reshape(pricestensor, [max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
-  
-  if FLAGS.precision == 'bfloat16':
-    #with tf.contrib.tpu.bfloat16_scope():
-    with tf.tpu.bfloat16_scope():
-      #logits = build_network(features)
-      #logits_mirror = build_network(features*-1.0+1.0)
-      logits = build_network(pricestensor)
-  elif FLAGS.precision == 'float32':
-    #logits = build_network(features)
-    #logits_mirror = build_network(features*-1.0+1.0)
-    logits = build_network(pricestensor)
-  
+  if mode == tf.estimator.ModeKeys.PREDICT:
+    if FLAGS.precision == 'bfloat16':
+      #with tf.contrib.tpu.bfloat16_scope():
+      with tf.tpu.bfloat16_scope():
+        logits = build_network(features)
+        #logits_mirror = build_network(features*-1.0+1.0)
+        #logits = build_network(pricestensor)
+      elif FLAGS.precision == 'float32':
+        logits = build_network(features)
+        #logits_mirror = build_network(features*-1.0+1.0)
+        #logits = build_network(pricestensor)
+
   logits = tf.cast(logits, tf.float32)
   #logits_mirror = tf.cast(logits_mirror, tf.float32)
   
