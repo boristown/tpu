@@ -114,13 +114,13 @@ class ImageNetTFExampleInput(object):
     """Statically set the batch_size dimension."""
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
-          #tf.TensorShape([None, None, None, batch_size])))
-          tf.TensorShape([None, batch_size])))
+          tf.TensorShape([None, None, None, batch_size])))
+          #tf.TensorShape([None, batch_size])))
       prices = tf.reshape(prices, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
-          #tf.TensorShape([batch_size, None, None, None])))
-          tf.TensorShape([batch_size, None])))
+          tf.TensorShape([batch_size, None, None, None])))
+          #tf.TensorShape([batch_size, None])))
     tf.logging.info('prices.shape3=%s' % (prices.shape) )
     return prices
   
