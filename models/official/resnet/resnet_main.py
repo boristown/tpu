@@ -486,7 +486,7 @@ def resnet_model_fn(features, labels, mode, params):
   '''
   
   if mode != tf.estimator.ModeKeys.PREDICT:
-    if FLAGS.precision == 'bfloat16':
+      if FLAGS.precision == 'bfloat16':
         labeltensor = tf.zeros([max_batch_len, 2], dtype=tf.bfloat16)
         pricestensor = tf.zeros([max_batch_len, priceInputCount], dtype=tf.bfloat16)
       else:
