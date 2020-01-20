@@ -407,8 +407,8 @@ class ImageNetTFExampleInput(object):
     # Transpose for performance on TPU
     if self.transpose_input:
       predict_dataset = predict_dataset.map(
-         #lambda prices: tf.transpose(prices, [1, 2, 3, 0]),
-         lambda prices: tf.transpose(prices, [1, 0]),
+         lambda prices: tf.transpose(prices, [1, 2, 3, 0]),
+         #lambda prices: tf.transpose(prices, [1, 0]),
          num_parallel_calls=self.num_parallel_calls)
 
     # Assign static batch size dimension
