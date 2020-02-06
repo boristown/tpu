@@ -629,7 +629,7 @@ def resnet_model_fn(features, labels, mode, params):
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
         #'classes': tf.argmax(logits, axis=2),
-        'classes': tf.argmax(logits, axis=1),
+        'classes': tf.argmax(logits, axis=1), 
         'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
     }
     

@@ -1,12 +1,15 @@
 python resnet_main.py ^
---train_steps=7000 ^
---train_batch_size=1101 ^
---eval_batch_size=1101 ^
---num_train_images=2203 ^
---num_eval_images=2203 ^
---steps_per_eval=50 ^
---iterations_per_loop=50 ^
---resnet_depth=50 ^
+--train_steps=34172  ^
+--train_batch_size=16  ^
+--eval_batch_size=16  ^
+--num_train_images=546767  ^
+--num_eval_images=2261  ^
+--steps_per_eval=500  ^
+--iterations_per_loop=500  ^
+--dropblock_groups=""  ^
+--dropblock_keep_prob="0.5"  ^
+--dropblock_size="3"  ^
+--resnet_depth=169  ^
 --use_tpu=False ^
 --data_dir="G:\TPU\data" ^
 --model_dir="G:\TPU\model" ^
