@@ -399,7 +399,6 @@ def resnet_model_fn(features, labels, mode, params):
   if isinstance(features, dict):
     features = features['feature']
   
-  price_list_len = 10000
   max_batch_len = FLAGS.input_batch_size #2000
   max_batch_len_tensor = tf.constant(max_batch_len, dtype=tf.int64)
 
