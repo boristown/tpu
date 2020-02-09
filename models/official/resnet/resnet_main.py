@@ -69,7 +69,7 @@ LABEL_COUNT = 2
 #PREDICT_BATCH_SIZE = 31
 #MAX_CASE = 10
 GROUP_COUNT = 4
-price_list_len = 10000
+price_list_len = 519
 FAKE_DATA_DIR = 'gs://cloud-tpu-test-datasets/fake_imagenet'
 
 flags.DEFINE_bool(
