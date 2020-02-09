@@ -36,6 +36,7 @@ DIMENSION_COUNT = 10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
 TEST_CASE = 1
+price_list_len = 519
 #MAX_CASE = 10
 
 def image_serving_input_fn():
@@ -181,7 +182,7 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
-    fix_price_len = 10000
+    fix_price_len = price_list_len
     
     keys_to_features = {
         'prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
