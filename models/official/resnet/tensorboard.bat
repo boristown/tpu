@@ -1,3 +1,3 @@
 cd G:\TPU\
-tensorboard --logdir=model
+tensorboard --logdir="G:\TPU\model"
 pause

@@ -1,7 +1,8 @@
 python resnet_main.py ^
---train_steps=34172  ^
---train_batch_size=16  ^
---eval_batch_size=16  ^
+--train_steps=546767  ^
+--train_batch_size=1  ^
+--eval_batch_size=1  ^
+--input_batch_size=800  ^
 --num_train_images=546767  ^
 --num_eval_images=2261  ^
 --steps_per_eval=500  ^

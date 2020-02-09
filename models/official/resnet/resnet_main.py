@@ -145,6 +145,9 @@ flags.DEFINE_integer(
     'eval_batch_size', default=1024, help='Batch size for evaluation.')
 
 flags.DEFINE_integer(
+    'input_batch_size', default=2000, help='Batch size for input.')
+
+flags.DEFINE_integer(
     'num_train_images', default=1281167, help='Size of training data set.')
 
 flags.DEFINE_integer(
@@ -397,7 +400,7 @@ def resnet_model_fn(features, labels, mode, params):
     features = features['feature']
   
   price_list_len = 10000
-  max_batch_len = 2000
+  max_batch_len = FLAGS.input_batch_size #2000
   max_batch_len_tensor = tf.constant(max_batch_len, dtype=tf.int64)
 
   # Insert Loop Code From Here Boris Town 20200109
@@ -501,9 +504,9 @@ def resnet_model_fn(features, labels, mode, params):
         def make_training_set(arrayindex, labeltensor, pricestensor):
           #if labels[batchIndex] > tf.constant(priceInputCount):
           trainingCount = labels_int[batchIndex] - tf.constant(priceInputCount, dtype=tf.int64)
-          trainingIndex = tf.Variable(0, dtype=tf.int64, trainable=False)
+          trainingIndex = tf.identity(trainingCount) - 1
           def while_cond(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
-            return tf.math.logical_and(trainingIndex < trainingCount, arrayindex < max_batch_len_tensor)
+            return tf.math.logical_and(trainingIndex >= 0, arrayindex < max_batch_len_tensor)
           def while_body(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
             #for trainingIndex in range(trainingCount):
             trainingInputData = tf.zeros([priceInputCount], dtype=tf.float32)
@@ -562,7 +565,7 @@ def resnet_model_fn(features, labels, mode, params):
 
             #LabelSet.write(arrayindex, LabelData)
             #LabelSet.write(arrayindex+1, LabelData*-1+1)
-            trainingIndex = tf.add(trainingIndex, 1)
+            trainingIndex = tf.subtract(trainingIndex, 1)
             arrayindex = tf.add(arrayindex, 2)
             return [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor]
           arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor = tf.while_loop(while_cond, while_body, [arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
@@ -874,7 +877,8 @@ def resnet_model_fn(features, labels, mode, params):
       loss=loss,
       train_op=train_op,
       host_call=host_call,
-      eval_metrics=eval_metrics)
+      eval_metrics=eval_metrics
+  )
 
 def _verify_non_empty_string(value, field_name):
   """Ensures that a given proposed field value is a non-empty string.
