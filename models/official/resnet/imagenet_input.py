@@ -186,21 +186,9 @@ class ImageNetTFExampleInput(object):
     
     keys_to_features = {
         'prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
-        #'prices' : tf.VarLenFeature(tf.float32),
-        'label': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
+        'scores' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
+        'count': tf.FixedLenFeature([1], tf.int64, default_value=[0]),
     }
-    '''
-    
-    max_frames = 20000
-    
-    
-    label_features = {
-        "label": tf.FixedLenFeature((), dtype=tf.int64)
-    }
-    prices_features = {
-        "prices": tf.FixedLenSequenceFeature((), dtype=tf.float32)
-    }
-    '''
     
     parsed = tf.parse_single_example(line, keys_to_features)
     
@@ -216,32 +204,31 @@ class ImageNetTFExampleInput(object):
     #label = label_features['label']
     
     prices = parsed['prices']
-    label = parsed['label']
+    scores = parsed['scores']
+    count = parsed['count']
         
     #label = tf.sparse.to_dense(label)
     #prices = tf.sparse.to_dense(prices)
     tf.logging.info("prices=%s,labels=%s" % (prices,label))
     
-    label = tf.reshape(label, [-1])
+    count= tf.reshape(count, [-1])
+    scores = tf.reshape(scores, [-1])
     prices = tf.reshape(prices, [-1])
-
-    #num_frames = tf.minimum(tf.shape(reshaped_prices)[0], max_frames)
-
-    #prices_matrix = self.resize_axis(reshaped_prices, 0, max_frames, fill_value=0)
-
     
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
-      label = tf.cast(label, tf.float32)
+      scores = tf.cast(scores, tf.float32)
+      count = tf.cast(count, tf.float32)
     else:
-      prices = tf.cast(prices, tf.bfloat16)
-      label = tf.cast(label, tf.float32)
+      prices = tf.cast(prices, tf.float32)
+      scores = tf.cast(scores, tf.bfloat16)
+      count = tf.cast(count, tf.float32)
     
     
     #prices = tf.reshape(prices, [-1])
     
     
-    return prices,label
+    return prices,scores,count
   
     '''
     #prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
