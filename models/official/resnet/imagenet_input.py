@@ -86,29 +86,30 @@ class ImageNetTFExampleInput(object):
     self.channelInputs = CHANNEL_COUNT
     self.operationOutputs = LABEL_COUNT
 
-  def set_shapes(self, batch_size, prices, operations):
+  def set_shapes(self, batch_size, prices, scores, ncount):
     #batch_real_size=batch_size*self.num_parallel_calls
-    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
+    tf.logging.info("prices=%s,scores=%s,ncount=%s" % (prices.shape,scores.shape,ncount.shape))
     batch_real_size=batch_size
     """Statically set the batch_size dimension."""
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
-          #tf.TensorShape([None, None, None, batch_real_size])))
           tf.TensorShape([None, batch_real_size])))
       prices = tf.reshape(prices, [-1])
-      operations.set_shape(operations.get_shape().merge_with(
+      scores.set_shape(scores.get_shape().merge_with(
           tf.TensorShape([None, batch_real_size])))
-          #tf.TensorShape([batch_real_size])))
-      operations = tf.reshape(operations, [-1])
+      scores = tf.reshape(scores, [-1])
+      ncount.set_shape(ncount.get_shape().merge_with(
+          tf.TensorShape([None, batch_real_size])))
+      ncount = tf.reshape(ncount, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
-          #tf.TensorShape([batch_real_size, None, None, None])))
           tf.TensorShape([batch_real_size, None])))
-      operations.set_shape(operations.get_shape().merge_with(
+      scores.set_shape(scores.get_shape().merge_with(
           tf.TensorShape([batch_real_size, None])))
-          #tf.TensorShape([batch_real_size])))
-    tf.logging.info("prices=%s,operations=%s" % (prices.shape,operations.shape))
-    return prices, operations
+      ncount.set_shape(ncount.get_shape().merge_with(
+          tf.TensorShape([batch_real_size, None])))
+    tf.logging.info("prices=%s,scores=%s,ncount=%s" % (prices.shape,scores.shape,ncount.shape))
+    return prices, scores, ncount
 
   def set_predict_shapes(self, batch_size, prices):
     tf.logging.info('prices.shape2=%s self.transpose_input=%s' % (prices.shape, self.transpose_input))
@@ -229,22 +230,6 @@ class ImageNetTFExampleInput(object):
     
     
     return prices,scores,count
-  
-    '''
-    #prices = tf.reshape(prices,[PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
-    prices = tf.reshape(prices,[-1])
-    operations = tf.reshape(operations, [1,1])
-    #operations = tf.tile(operations, [MAX_CASE, LABEL_COUNT])
-    #op_list = np.zeros([MAX_CASE, LABEL_COUNT])
-    operationMod = tf.mod(operations, 2)
-    operationDiv = tf.floordiv(operations, 2)
-    labels = tf.identity(operationMod)
-    labels2 = tf.subtract(1, labels)
-    labels = tf.concat([labels2, labels], 0)
-    labels = tf.reshape(labels, [-1])
-    tf.logging.info("prices=%s,labels=%s" % (prices.shape,labels.shape))
-    return prices,labels
-    '''
     
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
@@ -335,7 +320,7 @@ class ImageNetTFExampleInput(object):
     if self.transpose_input:
       dataset = dataset.map(
           #lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
-          lambda prices, operations: (tf.transpose(prices, [1, 0]), tf.transpose(operations, [1, 0])),
+          lambda prices, scores, ncount: (tf.transpose(prices, [1, 0]), tf.transpose(scores, [1, 0]), tf.transpose(ncount, [1, 0])),
           #lambda prices, operations: (tf.transpose(prices, [1, 0]), operations),
           num_parallel_calls=self.num_parallel_calls)
       
