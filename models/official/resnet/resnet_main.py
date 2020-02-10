@@ -381,7 +381,7 @@ def scale_to_0_1(x):
   x = x * (target_max - target_min) + target_min
   return x
 
-def resnet_model_fn(features, scores, labels, mode, params):
+def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
 
   Args:
