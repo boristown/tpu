@@ -587,57 +587,14 @@ def resnet_model_fn(features, labels, mode, params):
   # If necessary, in the model_fn, use params['batch_size'] instead the batch
   # size flags (--train_batch_size or --eval_batch_size).
   batch_size = params['batch_size']   # pylint: disable=unused-variable
-
-  #labels_reshaped = tf.reshape(labels, [logits.shape[1],logits.shape[0]])
-  #labels_reshaped = tf.reshape(labels, [logits.shape[0],logits.shape[1]])
   
-  # Calculate loss, which includes softmax cross entropy and L2 regularization.
-  #one_hot_labels = tf.one_hot(labels, FLAGS.num_label_classes)
-  #one_hot_labels = tf.transpose(labels_reshaped, [1, 0])
-  #one_hot_labels = labels_reshaped
-
-  #labels_mirror = labels*-1+1
-  #cross_entropy = [tf.losses.softmax_cross_entropy(
-  #    logits=logits[k],
-  #    onehot_labels=labels[k],
-  #    label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
-
-  #cross_entropy = tf.losses.softmax_cross_entropy(
-  #    logits=logits,
-  #    onehot_labels=labels,
-  #    label_smoothing=FLAGS.label_smoothing)
-
+  #Calculate Loss: cross entropy
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
       onehot_labels=labeltensor,
       label_smoothing=FLAGS.label_smoothing)
 
-  #cross_entropy_mirror = [tf.losses.softmax_cross_entropy(
-  #    logits=logits_mirror[k],
-  #    onehot_labels=labels_mirror[k],
-  #    label_smoothing=FLAGS.label_smoothing) / (MAX_CASE / 2) for k in range(MAX_CASE)]
-    
-
-  #cross_entropy_mirror = tf.losses.softmax_cross_entropy(
-  #    logits=logits_mirror,
-  #    onehot_labels=labels_mirror,
-  #    label_smoothing=FLAGS.label_smoothing)
-
-  # Add weight decay to the loss for non-batch-normalization variables.
-  #loss = sum(cross_entropy) + sum(cross_entropy_mirror) + FLAGS.weight_decay * tf.add_n(
-  #    [tf.nn.l2_loss(v) for v in tf.trainable_variables()
-  #     if 'batch_normalization' not in v.name])
-
-  #loss = cross_entropy + cross_entropy_mirror + FLAGS.weight_decay * tf.add_n(
-
   loss = cross_entropy
-  '''
-  loss = cross_entropy + FLAGS.weight_decay * tf.add_n([
-      tf.nn.l2_loss(v) 
-      for v in tf.trainable_variables()
-      if 'batch_normalization' not in v.name and v.dtype is not tf.int32 and v.dtype is not tf.int64
-  ])
-  '''
     
   host_call = None
   if mode == tf.estimator.ModeKeys.TRAIN:
@@ -755,57 +712,18 @@ def resnet_model_fn(features, labels, mode, params):
       Returns:
         A dict of the metrics to return from evaluation.
       """
-      # tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
-        
+
       k = 0
       predictions = tf.argmax(logits, axis=1)
-        
-      #predictions_mirror = 
-      #    tf.argmax(
-      #    logits_mirror,
-      #    axis=1
-      #    )
-        
-      #prediction1 = tf.argmax(logits[k], axis=1) 
-      #in_tops = tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), predictions, 1), tf.float32)
       
-      #top_accuracys = [tf.metrics.mean(
-      #    tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
-      #    predictions[k], 1), tf.float32)) for k in range(MAX_CASE)]
-
       top_accuracys = tf.metrics.mean(
         tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
         predictions, 1), tf.float32))
-    
-      #top_accuracys_mirror = tf.metrics.mean(
-      #    tf.cast(tf.nn.in_top_k(tf.cast(labels_mirror,tf.float32), 
-      #    predictions_mirror, 1), tf.float32))
-        
-      '''
-      top_accuracy1 = tf.metrics.mean(
-          tf.cast(tf.nn.in_top_k(tf.cast(labels[k],tf.float32), 
-          prediction1, 1), tf.float32))
-      '''
-        
-      #return {
-      #    '01Day_Accuracy': top_accuracys[0],
-      #    '01Day_Accuracy_Mirror': top_accuracys_mirror[0],
-      #    '03Day_Accuracy': top_accuracys[2],
-      #    '03Day_Accuracy_Mirror': top_accuracys_mirror[2],
-      #    '05Day_Accuracy': top_accuracys[4],
-      #    '05Day_Accuracy_Mirror': top_accuracys_mirror[4],
-      #    '07Day_Accuracy': top_accuracys[6],
-      #    '07Day_Accuracy_Mirror': top_accuracys_mirror[6],
-      #    '09Day_Accuracy': top_accuracys[8],
-      #    '09Day_Accuracy_Mirror': top_accuracys_mirror[8],
-      #}
 
       return {
           'Accuracy': top_accuracys,
-          #'Accuracy_Mirror': top_accuracys_mirror,
       }
 
-    #eval_metrics = (metric_fn, [labels, labels_mirror, logits, logits_mirror])
     eval_metrics = (metric_fn, [labeltensor, logits])
 
   #return tf.contrib.tpu.TPUEstimatorSpec(
