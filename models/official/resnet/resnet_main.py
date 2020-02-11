@@ -483,7 +483,7 @@ def resnet_model_fn(features, labels, mode, params):
         priceList = features[batchIndex]
         def make_training_set(arrayindex, labeltensor, pricestensor):
           #if labels[batchIndex] > tf.constant(priceInputCount):
-          trainingCount = labels_int[batchIndex] - tf.constant(priceInputCount, dtype=tf.int64)
+          trainingCount = labels_int[batchIndex] - tf.constant(priceInputCount-1, dtype=tf.int64)
           trainingIndex = tf.identity(trainingCount) - 1
           def while_cond(arrayindex, trainingIndex, trainingCount, labeltensor, pricestensor):
             return tf.math.logical_and(trainingIndex >= 0, arrayindex < max_batch_len_tensor)
@@ -508,11 +508,8 @@ def resnet_model_fn(features, labels, mode, params):
                 one_hot_price_element_mirror_2d = tf.one_hot(one_hot_price_element_mirror_1d, max_batch_len, on_value=1, off_value = 0, dtype=tf.int32, axis=0, name="pricemirror2d")
                 pricestensor = pricestensor + tf.cast(one_hot_price_element_mirror_2d, tf.float32) *  trainingInputData_Mirror[price_element_index]
 
-            if FLAGS.precision == 'bfloat16':
-              LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.bfloat16), lambda: tf.constant([1.0 ,0.0], dtype=tf.bfloat16))
-            else:
-              LabelData = tf.cond(tf.greater_equal(priceList[tf.cast(trainingIndex+priceInputCount,dtype=tf.int32)], priceList[tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]), lambda: tf.constant([0.0 ,1.0], dtype=tf.float32), lambda: tf.constant([1.0 ,0.0], dtype=tf.float32))
-
+            LabelData = labels[batchIndex][tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]
+            LabelData = tf.concat([LabelData, LabelData*-1+1], 0)
             LabelData = tf.reshape(LabelData, [2])
             LabelData_Mirror = tf.identity(LabelData*-1+1)
 
@@ -554,50 +551,29 @@ def resnet_model_fn(features, labels, mode, params):
         return [original_index, arrayindex, labeltensor, pricestensor]
       original_index, arrayindex, labeltensor, pricestensor = tf.while_loop(while_cond_copy, while_body_copy, [original_index, arrayindex, labeltensor, pricestensor], maximum_iterations=max_batch_len_tensor)
 
-      #pricestensor = tf.reshape(tf.concat(
-      #    [pricestensor[:arrayindex],pricestensor[:max_batch_len_tensor-arrayindex]], axis=0),
-      #    pricestensor.shape)
-
-      #labeltensor = tf.reshape(tf.concat(
-      #    [labeltensor[:arrayindex],labeltensor[:max_batch_len_tensor-arrayindex]], axis=0),
-      #    labeltensor.shape)
-
       pricestensor = tf.reshape(pricestensor, [max_batch_len, PRICE_COUNT, DIMENSION_COUNT, CHANNEL_COUNT])
 
       if FLAGS.precision == 'bfloat16':
-        #with tf.contrib.tpu.bfloat16_scope():
         with tf.tpu.bfloat16_scope():
-          #logits = build_network(features)
-          #logits_mirror = build_network(features*-1.0+1.0)
           logits = build_network(pricestensor)
       elif FLAGS.precision == 'float32':
-        #logits = build_network(features)
-        #logits_mirror = build_network(features*-1.0+1.0)
         logits = build_network(pricestensor)
         
   if mode == tf.estimator.ModeKeys.PREDICT:
     if FLAGS.precision == 'bfloat16':
-      #with tf.contrib.tpu.bfloat16_scope():
       with tf.tpu.bfloat16_scope():
         logits = build_network(features)
-        #logits_mirror = build_network(features*-1.0+1.0)
-        #logits = build_network(pricestensor)
     elif FLAGS.precision == 'float32':
       logits = build_network(features)
-      #logits_mirror = build_network(features*-1.0+1.0)
-      #logits = build_network(pricestensor)
 
   logits = tf.cast(logits, tf.float32)
-  #logits_mirror = tf.cast(logits_mirror, tf.float32)
   
   if mode == tf.estimator.ModeKeys.PREDICT:
     predictions = {
-        #'classes': tf.argmax(logits, axis=2),
         'classes': tf.argmax(logits, axis=1), 
         'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
     }
     
-    #tf.logging.info("classes=%s" % (tf.argmax(logits, axis=2)))
     tf.logging.info("classes=%s" % (tf.argmax(logits, axis=1)))
     tf.logging.info("probabilities=%s" % (predictions['probabilities']))
     
