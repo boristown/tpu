@@ -1,10 +1,10 @@
 python resnet_main.py ^
---train_steps=546767  ^
+--train_steps=3318324  ^
 --train_batch_size=1  ^
 --eval_batch_size=1  ^
---input_batch_size=800  ^
---num_train_images=546767  ^
---num_eval_images=2261  ^
+--input_batch_size=400  ^
+--num_train_images=3313529  ^
+--num_eval_images=17318  ^
 --steps_per_eval=500  ^
 --iterations_per_loop=500  ^
 --dropblock_groups=""  ^
