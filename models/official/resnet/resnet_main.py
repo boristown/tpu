@@ -509,7 +509,7 @@ def resnet_model_fn(features, labels, mode, params):
                 pricestensor = pricestensor + tf.cast(one_hot_price_element_mirror_2d, tf.float32) *  trainingInputData_Mirror[price_element_index]
 
             LabelData = labels[batchIndex][tf.cast(trainingIndex+priceInputCount-1,dtype=tf.int32)]
-            LabelData = tf.concat([LabelData, LabelData*-1+1], 0)
+            LabelData = tf.stack([LabelData*-1+1, LabelData], axis=0)
             LabelData = tf.reshape(LabelData, [2])
             LabelData_Mirror = tf.identity(LabelData*-1+1)
 
