@@ -33,7 +33,7 @@ tf.disable_v2_behavior()
 
 PRICE_COUNT = 12
 DIMENSION_COUNT = 10
-CHANNEL_COUNT = 1
+CHANNEL_COUNT = 3
 LABEL_COUNT = 2
 TEST_CASE = 1
 price_list_len = 519
