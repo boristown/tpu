@@ -36,7 +36,7 @@ DIMENSION_COUNT = 10
 CHANNEL_COUNT = 3
 LABEL_COUNT = 2
 TEST_CASE = 1
-price_list_len = 519
+#price_list_len = 519
 #MAX_CASE = 10
 
 def image_serving_input_fn():
@@ -93,14 +93,15 @@ class ImageNetTFExampleInput(object):
     """Statically set the batch_size dimension."""
     if self.transpose_input:
       prices.set_shape(prices.get_shape().merge_with(
-          tf.TensorShape([None, batch_real_size])))
+          #tf.TensorShape([None, batch_real_size])))
+          tf.TensorShape([None, None, None, batch_real_size])))
       prices = tf.reshape(prices, [-1])
       scores.set_shape(scores.get_shape().merge_with(
           tf.TensorShape([None, batch_real_size])))
       scores = tf.reshape(scores, [-1])
     else:
       prices.set_shape(prices.get_shape().merge_with(
-          tf.TensorShape([batch_real_size, None])))
+          tf.TensorShape([batch_real_size, None, None, None])))
       scores.set_shape(scores.get_shape().merge_with(
           tf.TensorShape([batch_real_size, None])))
     tf.logging.info("prices=%s,scores=%s" % (prices.shape,scores.shape))
@@ -178,47 +179,46 @@ class ImageNetTFExampleInput(object):
     Returns:
       Returns a tuple of (prices, operations) from the TFExample.
     """
-    fix_price_len = price_list_len
+    #fix_price_len = price_list_len
+    fix_price_len = PRICE_COUNT*DIMENSION_COUNT
     
     keys_to_features = {
-        'prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
-        'scores' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
+        'max_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
+        'min_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
+        'c_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
+        'label' : tf.FixedLenFeature([1], tf.float64, default_value=[0.0]),
     }
     
     parsed = tf.parse_single_example(line, keys_to_features)
     
-    '''
-    label_parsed, prices_parsed = tf.parse_single_sequence_example(
-        serialized=line,
-        context_features=label_features,
-        sequence_features=prices_features
-    )
-    '''
-    
     #prices = prices_features['prices']
     #label = label_features['label']
     
-    prices = parsed['prices']
-    scores = parsed['scores']
+    max_prices = tf.expand_dims(parsed['max_prices'], 1)
+    min_prices = tf.expand_dims(parsed['min_prices'] , 1)
+    c_prices = tf.expand_dims(parsed['c_prices'], 1)
+
+    prices = tf.concat(1, [max_prices, c_prices, min_prices])
+    label = parsed['label']
         
     #label = tf.sparse.to_dense(label)
     #prices = tf.sparse.to_dense(prices)
-    tf.logging.info("prices=%s,scores=%s" % (prices,scores))
-    
-    scores = tf.reshape(scores, [-1])
-    prices = tf.reshape(prices, [-1])
+    tf.logging.info("prices=%s,label=%s" % (prices, label))
     
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
-      scores = tf.cast(scores, tf.float32)
+      label = tf.cast(label, tf.float32)
     else:
-      prices = tf.cast(prices, tf.float32)
-      scores = tf.cast(scores, tf.bfloat16)
+      prices = tf.cast(prices, tf.bfloat16)
+      label = tf.cast(label, tf.bfloat16)
     
+    label2 = tf.subtract(1, label)
+    label = tf.concat(0, [label2, label])
     
-    #prices = tf.reshape(prices, [-1])
+    prices = tf.reshape(prices, [-1])
+    label = tf.reshape(label, [-1])
     
-    return prices,scores
+    return prices, label
     
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.
@@ -308,8 +308,8 @@ class ImageNetTFExampleInput(object):
     # Transpose for performance on TPU
     if self.transpose_input:
       dataset = dataset.map(
-          #lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
-          lambda prices, scores: (tf.transpose(prices, [1, 0]), tf.transpose(scores, [1, 0])),
+          lambda prices, operations: (tf.transpose(prices, [1, 2, 3, 0]), tf.transpose(operations, [1, 0])),
+          #lambda prices, scores: (tf.transpose(prices, [1, 0]), tf.transpose(scores, [1, 0])),
           #lambda prices, operations: (tf.transpose(prices, [1, 0]), operations),
           num_parallel_calls=self.num_parallel_calls)
       
