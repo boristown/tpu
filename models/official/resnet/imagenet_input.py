@@ -212,7 +212,7 @@ class ImageNetTFExampleInput(object):
       prices = tf.cast(prices, tf.bfloat16)
       label = tf.cast(label, tf.bfloat16)
     
-    label2 = tf.subtract(1, label)
+    label2 = tf.subtract(1.0, label)
     label = tf.concat([label2, label], axis=0)
     
     prices = tf.reshape(prices, [-1])
