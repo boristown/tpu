@@ -186,7 +186,7 @@ class ImageNetTFExampleInput(object):
         'max_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
         'min_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
         'c_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
-        'label' : tf.FixedLenFeature([1], tf.float64, default_value=[0.0]),
+        'label' : tf.FixedLenFeature([1], tf.float32, default_value=[0.0]),
     }
     
     parsed = tf.parse_single_example(line, keys_to_features)
