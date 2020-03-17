@@ -194,11 +194,11 @@ class ImageNetTFExampleInput(object):
     #prices = prices_features['prices']
     #label = label_features['label']
     
-    max_prices = tf.expand_dims(parsed['max_prices'], 1)
-    min_prices = tf.expand_dims(parsed['min_prices'] , 1)
-    c_prices = tf.expand_dims(parsed['c_prices'], 1)
+    max_prices = parsed['max_prices']
+    min_prices = parsed['min_prices']
+    c_prices = parsed['c_prices']
 
-    prices = tf.concat(1, [max_prices, c_prices, min_prices])
+    prices = tf.stack([max_prices, c_prices, min_prices], axis=1)
     label = parsed['label']
         
     #label = tf.sparse.to_dense(label)
@@ -213,7 +213,7 @@ class ImageNetTFExampleInput(object):
       label = tf.cast(label, tf.bfloat16)
     
     label2 = tf.subtract(1, label)
-    label = tf.concat(0, [label2, label])
+    label = tf.concat([label2, label], axis=0)
     
     prices = tf.reshape(prices, [-1])
     label = tf.reshape(label, [-1])
