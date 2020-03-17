@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import sys
-sys.path.append('/path/to/root')
+#sys.path.append('/path/to/root')
 
 import os
 import time
