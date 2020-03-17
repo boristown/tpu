@@ -205,18 +205,18 @@ class ImageNetTFExampleInput(object):
     #prices = tf.sparse.to_dense(prices)
     tf.logging.info("prices=%s,label=%s" % (prices, label))
     
+    label2 = tf.subtract(1.0, label)
+    label = tf.concat([label2, label], axis=0)
+    
+    prices = tf.reshape(prices, [-1])
+    label = tf.reshape(label, [-1])
+
     if not self.use_bfloat16:
       prices = tf.cast(prices, tf.float32)
       label = tf.cast(label, tf.float32)
     else:
       prices = tf.cast(prices, tf.bfloat16)
       label = tf.cast(label, tf.bfloat16)
-    
-    label2 = tf.subtract(1.0, label)
-    label = tf.concat([label2, label], axis=0)
-    
-    prices = tf.reshape(prices, [-1])
-    label = tf.reshape(label, [-1])
     
     return prices, label
     
