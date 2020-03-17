@@ -477,7 +477,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       #shape = 12 * 10
       inputs = conv2d_fixed_padding(
           #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=[3,1], strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=(3,1), strides=1,
           data_format=data_format)
       #shape = 10 * 8
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
