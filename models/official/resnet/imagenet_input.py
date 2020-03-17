@@ -208,7 +208,7 @@ class ImageNetTFExampleInput(object):
     label2 = tf.subtract(1.0, label)
     label = tf.concat([label2, label], axis=0)
     
-    prices = tf.reshape(prices, [-1])
+    prices = tf.reshape(prices, [PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
     label = tf.reshape(label, [-1])
 
     if not self.use_bfloat16:
