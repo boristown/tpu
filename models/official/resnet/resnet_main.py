@@ -617,7 +617,6 @@ def resnet_model_fn(features, labels, mode, params):
     
     # LARS is a large batch optimizer. LARS enables higher accuracy at batch 16K
     # and larger batch sizes.
-    '''
     if FLAGS.train_batch_size >= 16384 and FLAGS.enable_lars:
       learning_rate = 0.0
       optimizer = lars_util.init_lars_optimizer(current_epoch)
@@ -627,11 +626,12 @@ def resnet_model_fn(features, labels, mode, params):
           learning_rate=learning_rate,
           momentum=FLAGS.momentum,
           use_nesterov=True)
+
     '''
-    
     # I think Adam optimizer is better than LARS/Momentum optimizer for ZeroAI
     # Boris Town 20190207
     optimizer = tf.train.AdamOptimizer()
+    '''
     
     if FLAGS.use_tpu:
       # When using TPU, wrap the optimizer with CrossShardOptimizer which
