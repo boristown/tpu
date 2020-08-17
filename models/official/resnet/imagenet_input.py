@@ -44,10 +44,10 @@ def image_serving_input_fn():
 
   def _preprocess_image(image_bytes):
     """Preprocess a single raw image."""
-    image = resnet_preprocessing.preprocess_image(
-        image_bytes=image_bytes, is_training=False)
-    return image
-    #return null
+    #image = resnet_preprocessing.preprocess_image(
+    #    image_bytes=image_bytes, is_training=False)
+    #return image
+    return null
 
   image_bytes_list = tf.placeholder(
       shape=[None],
