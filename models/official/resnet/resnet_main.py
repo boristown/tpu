@@ -1003,6 +1003,11 @@ def main(unused_argv):
           #predictions = next(resnet_classifier.predict(
           #  input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
           #  ), None)
+          resnet_classifier.export_saved_model(
+              export_dir_base='D:/saved_model/',
+              #serving_input_receiver_fn=imagenet_input.image_serving_input_fn
+              )
+
           predictions = resnet_classifier.predict(
             input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size, os.path.basename(price_file_item)),
             )
