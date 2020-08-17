@@ -985,6 +985,12 @@ def main(unused_argv):
       
       price_file_pattern = os.path.join(
         FLAGS.prices_dir, 'price-*.csv')
+      
+      #20200817 save model
+      resnet_classifier.export_saved_model(
+          export_dir_base='D:/saved_model/',
+          serving_input_receiver_fn=imagenet_input.image_serving_input_fn
+          )
       while True:
         time.sleep(1)
         price_files  = glob.glob(price_file_pattern)
@@ -1003,11 +1009,6 @@ def main(unused_argv):
           #predictions = next(resnet_classifier.predict(
           #  input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size),
           #  ), None)
-          #20200817 save model
-          resnet_classifier.export_saved_model(
-              export_dir_base='D:/saved_model/',
-              #serving_input_receiver_fn=imagenet_input.image_serving_input_fn
-              )
 
           predictions = resnet_classifier.predict(
             input_fn=lambda params : imagenet_eval.predict_input_fn(params, price_batch_size, os.path.basename(price_file_item)),
