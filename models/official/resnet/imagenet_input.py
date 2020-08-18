@@ -47,7 +47,7 @@ def image_serving_input_fn():
     #image = resnet_preprocessing.preprocess_image(
     #    image_bytes=image_bytes, is_training=False)
     #return image
-    return None
+    return image_bytes
 
   image_bytes_list = tf.placeholder(
       shape=[None],
