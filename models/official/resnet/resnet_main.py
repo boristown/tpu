@@ -987,10 +987,10 @@ def main(unused_argv):
         FLAGS.prices_dir, 'price-*.csv')
       
       #20200817 save model
-      #resnet_classifier.export_saved_model(
-      #    export_dir_base='D:/saved_model/',
-      #    serving_input_receiver_fn=imagenet_input.image_serving_input_fn
-      #    )
+      resnet_classifier.export_saved_model(
+          export_dir_base='D:/saved_model/',
+          serving_input_receiver_fn=imagenet_input.image_serving_input_fn
+          )
 
       while True:
         time.sleep(1)

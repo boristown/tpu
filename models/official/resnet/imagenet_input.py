@@ -51,7 +51,7 @@ def image_serving_input_fn():
 
   image_bytes_list = tf.placeholder(
       shape=[None],
-      dtype=tf.string,
+      dtype=tf.float32,
   )
   images = tf.map_fn(
       _preprocess_image, image_bytes_list, back_prop=False, dtype=tf.float32)
