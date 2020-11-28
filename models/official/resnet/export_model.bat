@@ -13,7 +13,7 @@ python resnet_main.py ^
 --prices_dir="D:\Robot\WX_BG\Output\prices" ^
 --predict_dir="D:\Robot\WX_BG\Output\predict" ^
 --model_dir="D:\TPU\model" ^
---export_dir="D:/saved_model/turtle5" ^
+--export_dir="D:/saved_model/turtle6" ^
 --tpu="" ^
 --precision="float32" ^
 --data_format="channels_last"
