@@ -20,8 +20,8 @@ from __future__ import print_function
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
-PRICE_COUNT = 12
-DIMENSION_COUNT = 10
+PRICE_COUNT = 15 #12
+DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 1
 LABEL_COUNT = 2
 CROP_PADDING = 32
