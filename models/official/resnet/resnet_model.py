@@ -28,8 +28,8 @@ tf.disable_v2_behavior()
 
 BATCH_NORM_DECAY = 0.9
 BATCH_NORM_EPSILON = 1e-5
-PRICE_COUNT = 12
-DIMENSION_COUNT = 10
+PRICE_COUNT = 15 #12
+DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 3
 LABEL_COUNT = 2
 FILTER_COUNT= 32
@@ -474,12 +474,15 @@ def resnet_v1_generator(block_fn, layers, num_classes,
     LAYERS_SUM = sum(layers)
     if USE_DENSENET:
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
-      #shape = 12 * 10
+      #shape_v7 = 12 * 10
+      #shape_v8 = 15 * 15
       inputs = conv2d_fixed_padding(
           #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=(3,1), strides=1,
+          #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=(3,1), strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=3, strides=1,
           data_format=data_format)
-      #shape = 10 * 8
+      #shape_v7 = 10 * 10
+      #shape_v8 = 13 * 13
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = tf.identity(inputs, 'initial_conv')
       inputs = batch_norm_relu(inputs, is_training, data_format=data_format)
@@ -489,25 +492,29 @@ def resnet_v1_generator(block_fn, layers, num_classes,
           strides=1, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
-      #shape = 8 * 6
+      #shape_v7 = 8 * 8
+      #shape_v8 = 11 * 11
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[1],
           strides=1, is_training=is_training, name='block_group2',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[1],
           dropblock_size=dropblock_size)
-      #shape = 6 * 4
+      #shape_v7 = 6 * 6
+      #shape_v8 = 9 * 9
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[2],
           strides=1, is_training=is_training, name='block_group3',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[2],
           dropblock_size=dropblock_size)
-      #shape = 4 * 2
+      #shape_v7 = 4 * 4
+      #shape_v8 = 7 * 7
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[3],
           strides=1, is_training=is_training, name='block_group4',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[3],
           dropblock_size=dropblock_size)
-      #shape = 2 * 1
+      #shape_v7 = 2 * 2
+      #shape_v8 = 5 * 5
     else:
       
       inputs = conv2d_same_padding(

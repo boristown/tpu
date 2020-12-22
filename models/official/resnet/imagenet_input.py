@@ -31,8 +31,8 @@ tf.disable_v2_behavior()
 # from official.resnet import resnet_preprocessing
 #import resnet_preprocessing
 
-PRICE_COUNT = 12
-DIMENSION_COUNT = 10
+PRICE_COUNT = 15 #12
+DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 3
 LABEL_COUNT = 2
 TEST_CASE = 1
