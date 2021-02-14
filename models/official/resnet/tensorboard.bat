@@ -1,3 +1,3 @@
-cd G:\TPU\
-tensorboard --logdir="G:\TPU\model"
+cd D:\TPU\
+tensorboard --logdir="D:\TPU\model"
 pause
