@@ -34,7 +34,8 @@ tf.disable_v2_behavior()
 PRICE_COUNT = 15 #12
 DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 3
-LABEL_COUNT = 2
+#LABEL_COUNT = 2 #Delete Turtle X 20210214 BorisTown
+LABEL_COUNT = 12 #Insert Turtle X 20210214 BorisTown
 TEST_CASE = 1
 #price_list_len = 519
 #MAX_CASE = 10
@@ -186,39 +187,47 @@ class ImageNetTFExampleInput(object):
         'max_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
         'min_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
         'c_prices' : tf.FixedLenFeature([fix_price_len], tf.float32, default_value=[0.0]*fix_price_len),
-        'label' : tf.FixedLenFeature([1], tf.float32, default_value=[0.0]),
+        #'label' : tf.FixedLenFeature([1], tf.float32, default_value=[0.0]), #Delete Turtle X 20210214 BorisTown
+        'label' : tf.FixedLenFeature([], tf.int64, -1), #Insert Turtle X 20210214 BorisTown
     }
     
     parsed = tf.parse_single_example(line, keys_to_features)
-    
-    #prices = prices_features['prices']
-    #label = label_features['label']
     
     max_prices = parsed['max_prices']
     min_prices = parsed['min_prices']
     c_prices = parsed['c_prices']
 
     prices = tf.stack([max_prices, c_prices, min_prices], axis=1)
-    label = parsed['label']
-        
-    #label = tf.sparse.to_dense(label)
-    #prices = tf.sparse.to_dense(prices)
-    tf.logging.info("prices=%s,label=%s" % (prices, label))
+    prices = tf.reshape(prices, [PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT]) #Insert Turtle X 20210214 BorisTown
     
-    label2 = tf.subtract(1.0, label)
-    label = tf.concat([label2, label], axis=0)
+    #label = parsed['label'] #Delete Turtle X 20210214 BorisTown
+    # The labels will be in range [1,1000], 0 is reserved for background
+    label = tf.cast(tf.reshape(parsed['label'], shape=[]), dtype=tf.int32) #Insert Turtle X 20210214 BorisTown
     
-    prices = tf.reshape(prices, [PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
-    label = tf.reshape(label, [-1])
+    if not self.use_bfloat16: #Insert Turtle X 20210214 BorisTown
+      prices = tf.cast(prices, tf.float32) #Insert Turtle X 20210214 BorisTown
+    else: #Insert Turtle X 20210214 BorisTown
+      prices = tf.cast(prices, tf.bfloat16) #Insert Turtle X 20210214 BorisTown
 
-    if not self.use_bfloat16:
-      prices = tf.cast(prices, tf.float32)
-      label = tf.cast(label, tf.float32)
-    else:
-      prices = tf.cast(prices, tf.bfloat16)
-      label = tf.cast(label, tf.bfloat16)
+    onehot_label = tf.one_hot(label, LABEL_COUNT) #Insert Turtle X 20210214 BorisTown
+    return prices, onehot_label #Insert Turtle X 20210214 BorisTown
     
-    return prices, label
+    #Begin Delete Turtle X 20210214 BorisTown
+    #label2 = tf.subtract(1.0, label)
+    #label = tf.concat([label2, label], axis=0)
+    
+    #prices = tf.reshape(prices, [PRICE_COUNT,DIMENSION_COUNT,CHANNEL_COUNT])
+    #label = tf.reshape(label, [-1])
+
+    #if not self.use_bfloat16:
+    #  prices = tf.cast(prices, tf.float32)
+    #  label = tf.cast(label, tf.float32)
+    #else:
+    #  prices = tf.cast(prices, tf.bfloat16)
+    #  label = tf.cast(label, tf.bfloat16)
+    
+    #return prices, label
+    #End Delete Turtle X 20210214 BorisTown
     
   def dataset_predict_parser(self, line):
     """Parses prices and its operations from a serialized ResNet-50 TFExample.

@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\models",
+    "\\models\\official",
+    "\\models\\official\\resnet"
+  ],
+  "SelectedNode": "\\models\\official\\resnet\\resnet_train_cpu.bat",
+  "PreviewInSolutionExplorer": false
+}

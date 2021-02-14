@@ -65,7 +65,8 @@ FLAGS = flags.FLAGS
 PRICE_COUNT = 15 #12
 DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 3
-LABEL_COUNT = 2
+#LABEL_COUNT = 2 #Delete Turtle X 20210214 BorisTown
+LABEL_COUNT = 12 #Insert Turtle X 20210214 BorisTown
 #PREDICT_BATCH_SIZE = 31
 #MAX_CASE = 10
 GROUP_COUNT = 4
@@ -592,6 +593,7 @@ def resnet_model_fn(features, labels, mode, params):
   # size flags (--train_batch_size or --eval_batch_size).
   batch_size = params['batch_size']   # pylint: disable=unused-variable
   
+  tf.logging.info("logits=%s,labels=%s" % (logits.shape, labels.shape))
   #Calculate Loss: cross entropy
   cross_entropy = tf.losses.softmax_cross_entropy(
       logits=logits,
@@ -804,10 +806,13 @@ def _select_tables_from_flags():
 
 
 def main(unused_argv):
-  tpu_cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
-      FLAGS.tpu if (FLAGS.tpu or FLAGS.use_tpu) else '',
-      zone=FLAGS.tpu_zone,
-      project=FLAGS.gcp_project)
+  if FLAGS.tpu or FLAGS.use_tpu: #Insert 20210214 BorisTown Turtle X 
+      tpu_cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
+          FLAGS.tpu if (FLAGS.tpu or FLAGS.use_tpu) else '',
+          zone=FLAGS.tpu_zone,
+          project=FLAGS.gcp_project)
+  else:
+      tpu_cluster_resolver = None
 
   if FLAGS.use_async_checkpointing:
     save_checkpoints_steps = None
