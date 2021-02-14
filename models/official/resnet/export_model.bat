@@ -10,10 +10,10 @@ python resnet_main.py ^
 --resnet_depth=201 ^
 --use_tpu=False ^
 --data_dir="D:\TPU\data" ^
---prices_dir="D:\Robot\WX_BG\Output\prices" ^
---predict_dir="D:\Robot\WX_BG\Output\predict" ^
---model_dir="D:\TPU\turtle8" ^
---export_dir="D:/saved_model/saved_model_turtle8" ^
+--prices_dir="D:\TPU\data" ^
+--predict_dir="D:\TPU\data" ^
+--model_dir="D:\TPU\model\turtlex" ^
+--export_dir="D:\TPU\export\saved_model_turtlex" ^
 --tpu="" ^
 --precision="float32" ^
 --data_format="channels_last"
