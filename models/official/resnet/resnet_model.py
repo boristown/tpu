@@ -33,7 +33,7 @@ DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 3
 #LABEL_COUNT = 2 #Delete Turtle X 20210214 BorisTown
 LABEL_COUNT = 12 #Insert Turtle X 20210214 BorisTown
-FILTER_COUNT= 128
+FILTER_COUNT= 64
 GROWTH_RATE = 32
 USE_DENSENET = True
 #MAX_CASE = 10
@@ -480,7 +480,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       inputs = conv2d_fixed_padding(
           #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
           #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=(3,1), strides=1,
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=3, strides=2,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=3, strides=1,
           data_format=data_format)
       #shape_v7 = 10 * 10
       #shape_v8 = 13 * 13
