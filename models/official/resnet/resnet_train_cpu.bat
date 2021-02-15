@@ -10,7 +10,7 @@ python resnet_main.py ^
 --dropblock_groups=""  ^
 --dropblock_keep_prob="0.5"  ^
 --dropblock_size="3"  ^
---resnet_depth=169  ^
+--resnet_depth=201  ^
 --use_tpu=False ^
 --data_dir="D:\TPU\data" ^
 --model_dir="D:\TPU\model" ^

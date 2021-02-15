@@ -281,7 +281,7 @@ checkpointing and evaluation.
 	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8
 
 	---
-	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8 -zone=us-central1-b --project $PROJECT_NAME --tf-version=2.4.0
+	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8 -zone=us-central1-a --project $PROJECT_NAME --tf-version=2.4.0
 	ctpu up -preemptible -name=zeroaitpu -tpu-size=v2-8 -zone=us-central1-b --project $PROJECT_NAME --tf-version=2.4.0
 	Y
 
@@ -311,10 +311,10 @@ checkpointing and evaluation.
 	psftp
 	open 47.94.154.29
 	root
-	put D:/TPU/export/saved_model_turtlex/1613291312.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613291312.zip
+	put D:/TPU/export/saved_model_turtlex/1613314992.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613314992.zip
 	---
 	cd /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex
-	unzip -d 1613291312 1613291312.zip
+	unzip -d 1613314992 1613314992.zip
 	
 	pip install --upgrade pip
 	pip install tensorflow
@@ -325,8 +325,10 @@ checkpointing and evaluation.
 	git clone https://github.com/boristown/tpu.git boristown 
 	cd boristown/models/official/resnet/
 
+	python3 resnet_main.py --train_steps=50000 --train_batch_size=100000 --eval_batch_size=100000 --num_train_images=69200164 --num_eval_images=1972334 --steps_per_eval=100 --iterations_per_loop=100 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12 --label_smoothing=0.1
+	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=46165297+23034867 --num_eval_images=1272792+699542 --steps_per_eval=100 --iterations_per_loop=100 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12
 	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=30806297 --num_eval_images=800602 --steps_per_eval=200 --iterations_per_loop=200 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12
-
+	
 	python resnet_main.py --train_steps=20400 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=154034586 --num_eval_images=3480050 --steps_per_eval=1000 --iterations_per_loop=1000 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last" 
 
 	python resnet_main.py --train_steps=10200 --train_batch_size=50000 --eval_batch_size=50000 --num_train_images=154034586 --num_eval_images=3480050 --steps_per_eval=300 --iterations_per_loop=300 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=169 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last" 
@@ -345,7 +347,7 @@ checkpointing and evaluation.
 
 	export PROJECT_NAME=hellotpuresnet50
 	gcloud config set project $PROJECT_NAME
-	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8 -zone=us-central1-b --project $PROJECT_NAME --tf-version=2.4.0
+	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8 -zone=us-central1-a --project $PROJECT_NAME --tf-version=2.4.0
 	export STORAGE_BUCKET=gs://zeroaistorage
 	capture_tpu_profile --tpu=${TPU_NAME} --logdir=${STORAGE_BUCKET}/resnet
 	tensorboard --logdir=${STORAGE_BUCKET}/resnet

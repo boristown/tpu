@@ -257,7 +257,7 @@ flags.DEFINE_float(
     help=('Weight decay coefficiant for l2 regularization.'))
 
 flags.DEFINE_float(
-    'label_smoothing', default=0.0,
+    'label_smoothing', default=0.1,
     help=('Label smoothing parameter used in the softmax_cross_entropy'))
 
 flags.DEFINE_integer('log_step_count_steps', 64, 'The number of steps at '

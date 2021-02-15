@@ -33,8 +33,8 @@ DIMENSION_COUNT = 15 #10
 CHANNEL_COUNT = 3
 #LABEL_COUNT = 2 #Delete Turtle X 20210214 BorisTown
 LABEL_COUNT = 12 #Insert Turtle X 20210214 BorisTown
-FILTER_COUNT= 32
-GROWTH_RATE = 32
+FILTER_COUNT= 50
+GROWTH_RATE = 50
 USE_DENSENET = True
 #MAX_CASE = 10
 group_count = 4
@@ -480,7 +480,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       inputs = conv2d_fixed_padding(
           #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=2, strides=1,
           #inputs=inputs, filters=int(FILTER_COUNT), kernel_size=(3,1), strides=1,
-          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=3, strides=1,
+          inputs=inputs, filters=int(FILTER_COUNT), kernel_size=3, strides=2,
           data_format=data_format)
       #shape_v7 = 10 * 10
       #shape_v8 = 13 * 13
@@ -490,7 +490,7 @@ def resnet_v1_generator(block_fn, layers, num_classes,
       tf.logging.info("inputs.shape=%s" % (inputs.shape))
       inputs = block_group(
           inputs=inputs, filters=GROWTH_RATE, block_fn=block_fn, blocks=layers[0],
-          strides=1, is_training=is_training, name='block_group1',
+          strides=2, is_training=is_training, name='block_group1',
           data_format=data_format, dropblock_keep_prob=dropblock_keep_probs[0],
           dropblock_size=dropblock_size)
       #shape_v7 = 8 * 8
