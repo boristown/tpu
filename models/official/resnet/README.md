@@ -311,12 +311,20 @@ checkpointing and evaluation.
 	psftp
 	open 47.94.154.29
 	root
-	put D:/TPU/export/saved_model_turtlex/1613391251.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613391251.zip
+	put D:/TPU/export/saved_model_turtlex/1613460698.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613460698.zip
 	---
 	47.94.154.29
 	cd /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex
-	unzip -d 1613391251 1613391251.zip
+	unzip -d 1613460698 1613460698.zip
+	docker ps
+	docker kill
 
+sudo docker run \
+-p 8501:8501 \
+--mount type=bind,source=/root/serving/tensorflow_serving/servables/tensorflow/testdata/,target=/models/ \
+-t tensorflow/serving \
+--model_config_file=/models/models.config \
+--model_config_file_poll_wait_seconds=60
 	---
 
 	export PROJECT_NAME=hellotpuresnet50
