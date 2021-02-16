@@ -731,13 +731,26 @@ def resnet_model_fn(features, labels, mode, params):
       k = 0
       predictions = tf.argmax(logits, axis=1)
       
-      top_accuracys = tf.metrics.mean(
+      top_1_accuracys = tf.metrics.mean(
         #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
         tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
         predictions, 1), tf.float32))
+      
+      
+      top_3_accuracys = tf.metrics.mean(
+        #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
+        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+        predictions, 3), tf.float32))
+      
+      top_6_accuracys = tf.metrics.mean(
+        #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
+        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+        predictions, 6), tf.float32))
 
       return {
-          'Accuracy': top_accuracys,
+          'Top-1-Accuracy': top_1_accuracys,
+          'Top-3-Accuracy': top_3_accuracys,
+          'Top-6-Accuracy': top_6_accuracys,
       }
 
     #eval_metrics = (metric_fn, [labeltensor, logits])

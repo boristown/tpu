@@ -311,11 +311,11 @@ checkpointing and evaluation.
 	psftp
 	open 47.94.154.29
 	root
-	put D:/TPU/export/saved_model_turtlex/1613366025.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613366025.zip
+	put D:/TPU/export/saved_model_turtlex/1613391251.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613391251.zip
 	---
 	47.94.154.29
 	cd /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex
-	unzip -d 1613366025 1613366025.zip
+	unzip -d 1613391251 1613391251.zip
 	
 	pip install --upgrade pip
 	pip install tensorflow
@@ -326,7 +326,8 @@ checkpointing and evaluation.
 	git clone https://github.com/boristown/tpu.git boristown 
 	cd boristown/models/official/resnet/
 
-	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=69200164 --num_eval_images=1972334 --steps_per_eval=80 --iterations_per_loop=80 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12 --label_smoothing=0.1
+	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=34810998 --num_eval_images=5247908 --steps_per_eval=50 --iterations_per_loop=50 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12 --label_smoothing=0.1
+	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=69200164 --num_eval_images=1972334 --steps_per_eval=100 --iterations_per_loop=100 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12 --label_smoothing=0.1
 	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=46165297+23034867 --num_eval_images=1272792+699542 --steps_per_eval=100 --iterations_per_loop=100 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12
 	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=30806297 --num_eval_images=800602 --steps_per_eval=200 --iterations_per_loop=200 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12
 	
