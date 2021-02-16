@@ -316,6 +316,13 @@ checkpointing and evaluation.
 	47.94.154.29
 	cd /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex
 	unzip -d 1613391251 1613391251.zip
+
+	---
+
+	export PROJECT_NAME=hellotpuresnet50
+	gcloud config set project $PROJECT_NAME
+	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8 -zone=us-central1-b --project $PROJECT_NAME --tf-version=2.4.0
+	ctpu up -preemptible -name=zeroaitpu -tpu-size=v2-8 -zone=us-central1-b --project $PROJECT_NAME --tf-version=2.4.0
 	
 	pip install --upgrade pip
 	pip install tensorflow

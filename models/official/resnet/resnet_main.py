@@ -729,23 +729,30 @@ def resnet_model_fn(features, labels, mode, params):
       """
 
       k = 0
+      labels = tf.argmax(labels, axis=1)
       predictions = tf.argmax(logits, axis=1)
       
-      top_1_accuracys = tf.metrics.mean(
-        #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
-        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
-        predictions, 1), tf.float32))
+      top_1_accuracys = tf.metrics.accuracy(labels, predictions)
+      in_top_3 = tf.cast(tf.nn.in_top_k(logits, labels, 3), tf.float32)
+      top_3_accuracys = tf.metrics.mean(in_top_3)
+      in_top_6 = tf.cast(tf.nn.in_top_k(logits, labels, 6), tf.float32)
+      top_6_accuracys = tf.metrics.mean(in_top_6)
+
+      #top_1_accuracys = tf.metrics.mean(
+      #  #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
+      #  tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+      #  predictions, 1), tf.float32))
       
       
-      top_3_accuracys = tf.metrics.mean(
-        #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
-        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
-        predictions, 3), tf.float32))
+      #top_3_accuracys = tf.metrics.mean(
+      #  #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
+      #  tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+      #  predictions, 3), tf.float32))
       
-      top_6_accuracys = tf.metrics.mean(
-        #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
-        tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
-        predictions, 6), tf.float32))
+      #top_6_accuracys = tf.metrics.mean(
+      #  #tf.cast(tf.nn.in_top_k(tf.cast(LabelsStack,tf.float32), 
+      #  tf.cast(tf.nn.in_top_k(tf.cast(labels,tf.float32), 
+      #  predictions, 6), tf.float32))
 
       return {
           'Top-1-Accuracy': top_1_accuracys,
