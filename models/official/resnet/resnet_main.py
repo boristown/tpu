@@ -155,7 +155,7 @@ flags.DEFINE_integer(
     'num_eval_images', default=50000, help='Size of evaluation data set.')
 
 flags.DEFINE_integer(
-    'num_label_classes', default=12, help='Number of classes, at least 2')
+    'num_label_classes', default=10, help='Number of classes, at least 2')
 
 flags.DEFINE_integer(
     'steps_per_eval', default=1251,
