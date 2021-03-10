@@ -5,6 +5,6 @@
     "\\models\\official",
     "\\models\\official\\resnet"
   ],
-  "SelectedNode": "\\models\\official\\resnet\\resnet_train_cpu.bat",
+  "SelectedNode": "\\models\\official\\resnet\\resnet_main.py",
   "PreviewInSolutionExplorer": false
 }

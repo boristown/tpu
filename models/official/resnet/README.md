@@ -337,7 +337,7 @@ sudo docker run \
 	export STORAGE_BUCKET=gs://zeroaistorage
 	export PYTHONPATH="$PYTHONPATH:/boristown/models"
 	cd ~/
-	rm -rf boristown
+	rm -rf boristown 
 	git clone https://github.com/boristown/tpu.git boristown 
 	cd boristown/models/official/resnet/
 
