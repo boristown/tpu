@@ -311,11 +311,11 @@ checkpointing and evaluation.
 	psftp
 	open 47.94.154.29
 	root
-	put D:/TPU/export/saved_model_turtlex/1613460698.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1613460698.zip
+	put D:/TPU/export/saved_model_turtlex/1615531421.zip /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex/1615531421.zip
 	---
 	47.94.154.29
 	cd /root/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtlex
-	unzip -d 1613460698 1613460698.zip
+	unzip -d 1615531421 1615531421.zip
 	docker ps
 	docker kill
 
@@ -326,7 +326,9 @@ sudo docker run \
 --model_config_file=/models/models.config \
 --model_config_file_poll_wait_seconds=60
 	---
-
+	mkdir ~/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtle11/
+	unzip -d ~/serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_turtle11/1615531421 1615531421.zip
+	---
 	export PROJECT_NAME=hellotpuresnet50
 	gcloud config set project $PROJECT_NAME
 	ctpu up -preemptible -name=zeroaitpu -tpu-size=v3-8 -zone=us-central1-b --project $PROJECT_NAME --tf-version=2.4.0
@@ -341,7 +343,8 @@ sudo docker run \
 	git clone https://github.com/boristown/tpu.git boristown 
 	cd boristown/models/official/resnet/
 
-	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=16374672 --num_eval_images=2072842 --steps_per_eval=50 --iterations_per_loop=50 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=10 --label_smoothing=0.1
+	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=281527704 --num_eval_images=2350436 --steps_per_eval=200 --iterations_per_loop=200 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=10 --label_smoothing=0.1
+	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=16374672+265153032 --num_eval_images=2072842+277594 --steps_per_eval=50 --iterations_per_loop=50 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=10 --label_smoothing=0.1
 	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=34810998 --num_eval_images=5247908 --steps_per_eval=50 --iterations_per_loop=50 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12 --label_smoothing=0.1
 	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=69200164 --num_eval_images=1972334 --steps_per_eval=100 --iterations_per_loop=100 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12 --label_smoothing=0.1
 	python3 resnet_main.py --train_steps=50000 --train_batch_size=40000 --eval_batch_size=40000 --num_train_images=46165297+23034867 --num_eval_images=1272792+699542 --steps_per_eval=100 --iterations_per_loop=100 --dropblock_groups="" --dropblock_keep_prob="1" --dropblock_size="1" --resnet_depth=201 --data_dir=${STORAGE_BUCKET}/data --model_dir=${STORAGE_BUCKET}/resnet --tpu=${TPU_NAME} --precision="bfloat16" --data_format="channels_last"  --num_label_classes=12
